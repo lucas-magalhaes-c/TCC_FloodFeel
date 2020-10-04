@@ -1,0 +1,6 @@
+{
+    "bot_name": "<BOT_NAME>",
+    "telegram_bot_address": "t.me/<BOT_NAME>",
+    "bot_token": "<TOKEN>",
+    "setTelegramWebhook_url": "https://api.telegram.org/bot<YOURTOKEN>/setWebhook?url=<cloud_function_url>"
+}
