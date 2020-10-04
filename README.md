@@ -15,9 +15,8 @@ Existem duas formas de obter novas mensagens que foram feitas para o bot: por me
 
 ```
 https://api.telegram.org/bot<TOKEN>/setWebhook?url=<CLOUD_FUNCTION_URL>
-```
 
 Em que:
 1. <TOKEN> é o token bot do Telegram.
 2. <CLOUD_FUNCTION_URL> é a URL da Cloud Function que contém o bot
-
+```
