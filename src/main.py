@@ -2,6 +2,8 @@
 # API
 # https://core.telegram.org/bots/api
 
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup 
+# from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 import requests
 import json
 import sys
@@ -9,7 +11,10 @@ import sys
 def main(request):
     request_json = ""
     if "-local" in sys.argv:
-        request_json = json.loads(open("debug/payload.json").read())
+        if "-callback" in sys.argv:
+            request_json = json.loads(open("debug/payload_callback.json").read())
+        else:
+            request_json = json.loads(open("debug/payload.json").read())
     else:
         request_json = request.get_json()
         print(request_json)
@@ -18,70 +23,115 @@ def main(request):
     if request_json is None:
         return
     
-    # Ignore requests from bots
-    if request_json["message"]["from"]["is_bot"] != None and request_json["message"]["from"]["is_bot"] is True:
-        print("Request from bot ignored")
-        return
-
     run_bot(request_json)
 
 def run_bot(request_json):
     # Get bot config data
     config = json.loads(open("bot_config.json").read())
-    TBOT = TelegramBot(config) 
 
-    if request_json["message"] != None:
-        MH = MessageHandle(request_json["message"])
-        MH.showDetails()
+    # Initializes the message handle
+    MH = MessageHandle(request_json=request_json,config=config)
 
-        TBOT.sendMessage(
-            msg="Olá, {}!".format(MH.getUserName()),
-            chat_id=MH.getChatId()
-            )
+    if MH.is_valid() == False:
+        return
+
+    # Initializes the bot with the token
+    bot = Bot(token=config["bot_token"]) 
+
+    MH.show_details()
     
+    keyboard = [
+        [InlineKeyboardButton(text="Consultar enchentes em São Paulo", callback_data='M1')],
+        [InlineKeyboardButton(text="Inserir novo foco de enchente", callback_data='M2')],
+        [InlineKeyboardButton(text="Cadastrar", callback_data='M3')],
+        [InlineKeyboardButton(text="Compartilhar", callback_data='M4')],
+    ]
 
-class TelegramBot():
-    def __init__(self,config):
-        self.token = config["bot_token"]
-        self.base = "https://api.telegram.org/bot{}".format(self.token)+"/"
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-    def sendMessage(self, msg, chat_id):
-        url = self.base + "sendMessage?chat_id={}&text={}".format(chat_id,msg)
-        if msg is not None:
-            requests.get(url)
-        print("Msg enviada")
+    bot.send_message(
+        chat_id=MH.get_user_id(),
+        text="Olá, {}!".format(MH.get_username()),
+        reply_markup=reply_markup
+    )
+
 
 class MessageHandle():
-    def __init__(self,message):
-        self._configure(message)
-        
-    def _configure(self,message):
-        try:
-            self.user_id = message["from"]["id"]
-        except:
-            self.user_id = None
-
-        try:
-            self.user_name = message["from"]["first_name"]
-        except:
-            self.user_name = None
+    def __init__(self,request_json,config):
         
         try:
-            self.chat_id = message["chat"]["id"]
-        except:
-            self.chat_id = None
+            request_json["callback_query"]
+            self.is_callback_query = True
+        except: 
+            self.is_callback_query = False
 
-    def showDetails(self):
-        print("User id: {}\nUser: {}\nChat id: {}".format(self.user_id,self.user_name,self.chat_id))
+        print("is callback:",self.is_callback_query)
+        self.bot_id = config["bot_id"]
+        self.bot_name = config["bot_name"]
+        self._configure(request_json)
+
+        
+    def _configure(self,request_json):
+        message = None
+
+        if self.is_callback_query == True:
+            message = request_json["callback_query"]["message"]
             
-    def getUserId(self):
-        return self.user_id
-    
-    def getUserName(self):
-        return self.user_name
+            try:
+                self.callback_data = request_json["callback_query"]["data"]
+            except:
+                self.callback_data = None
+                print("Fail to configure requested callback")
+        else: 
+            message =  request_json["message"]
 
-    def getChatId(self):
-        return self.chat_id
+        # chat info
+        try:
+            self.chat = message["chat"]
+        except:
+            self.chat = None
+        
+        # request from info
+        try:
+            self.request_from = message["from"]
+        except:
+            self.request_from = None
+
+        
+    def _validate(self):
+        if self.is_callback_query:
+            try:
+                if self.bot_id == self.request_from["id"] and self.bot_name == self.request_from["first_name"]:
+                    self.is_valid = True
+                else:
+                    self.is_valid = False
+                    print("Failed on validation: bot id doesnt match")
+            except:
+                print("Failed on callback query validation")
+        else:
+            if self.request_from["is_bot"] == True:
+                self.is_valid = False
+                print("Failed: request from bot")
+            else:
+                self.is_valid = True
+
+    def show_details(self):
+        print("> Chat\nUser id: {}\nUser: {}".format(self.chat["id"],self.chat["first_name"]))
+            
+    def get_user_id(self):
+        return self.chat["id"]
+    
+    def get_username(self):
+        return self.chat["first_name"]
+
+    def get_callback_data(self):
+        if self.is_callback_query == True:
+            return self.callback_data
+        else:
+            return None
+    
+    def is_valid(self):
+        return self.is_valid
 
 main(None)
 
