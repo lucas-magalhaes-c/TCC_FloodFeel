@@ -2,7 +2,7 @@
 # API
 # https://core.telegram.org/bots/api
 
-from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Bot
 # from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 import requests
 import json
@@ -148,6 +148,7 @@ class MessageHandle():
     def is_valid_request(self):
         return self.is_valid
 
-main(None)
+if "-local" in sys.argv:
+    main(None)
 
 

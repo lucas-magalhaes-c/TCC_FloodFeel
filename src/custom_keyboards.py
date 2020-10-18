@@ -10,19 +10,19 @@ class FloodFeel_Keyboards():
     def _start_long(self):
         self.text = "Olá, seja bem vindo(a) ao EnchentesBot! 🤖\nAqui você será informado(a) sobre os pontos de enchente na cidade de São Paulo e poderá contribuir informando novos locais de enchente.\n\nO que deseja fazer?"
         self.keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(text="Consultar enchentes em São Paulo", callback_data='start_op1')],
-            [InlineKeyboardButton(text="Inserir novo foco de enchente", callback_data='start_op2')],
-            [InlineKeyboardButton(text="Cadastrar", callback_data='start_op3')],
-            [InlineKeyboardButton(text="Compartilhar", callback_data='start_op4')]
+            [InlineKeyboardButton(text="Consultar enchentes em São Paulo", callback_data='start_opt_1')],
+            [InlineKeyboardButton(text="Inserir novo foco de enchente", callback_data='start_opt_2')],
+            [InlineKeyboardButton(text="Cadastrar", callback_data='start_opt_3')],
+            [InlineKeyboardButton(text="Compartilhar", callback_data='start_opt_4')]
         ])
     
     def _start_short(self):
         self.text = "Olá! O que deseja fazer?"
         self.keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(text="Consultar enchentes em São Paulo", callback_data='start_op1')],
-            [InlineKeyboardButton(text="Inserir novo foco de enchente", callback_data='start_op2')],
-            [InlineKeyboardButton(text="Cadastrar", callback_data='start_op3')],
-            [InlineKeyboardButton(text="Compartilhar", callback_data='start_op4')]
+            [InlineKeyboardButton(text="Consultar enchentes em São Paulo", callback_data='start_opt_1')],
+            [InlineKeyboardButton(text="Inserir novo foco de enchente", callback_data='start_opt_2')],
+            [InlineKeyboardButton(text="Cadastrar", callback_data='start_opt_3')],
+            [InlineKeyboardButton(text="Compartilhar", callback_data='start_opt_4')]
         ])
 
     def _start_opt_1(self):
@@ -34,8 +34,8 @@ class FloodFeel_Keyboards():
     def _start_opt_2(self):
         self.text = "Você está no local da enchente?"
         self.keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(text="Sim", callback_data='start_op2_1')],
-            [InlineKeyboardButton(text="Não", callback_data='start_op2_2')]
+            [InlineKeyboardButton(text="Sim", callback_data='start_opt_2_1')],
+            [InlineKeyboardButton(text="Não", callback_data='start_opt_2_2')]
         ])
     
     def _start_opt_2_1(self):
