@@ -2,11 +2,12 @@
 # API
 # https://core.telegram.org/bots/api
 
-from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup 
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 # from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 import requests
 import json
 import sys
+from custom_keyboards import FloodFeel_Keyboards
 
 def main(request):
     request_json = ""
@@ -32,26 +33,25 @@ def run_bot(request_json):
     # Initializes the message handle
     MH = MessageHandle(request_json=request_json,config=config)
 
-    if MH.is_valid() == False:
+    if MH.is_valid_request() == False:
         return
 
     # Initializes the bot with the token
     bot = Bot(token=config["bot_token"]) 
 
     MH.show_details()
-    
-    keyboard = [
-        [InlineKeyboardButton(text="Consultar enchentes em São Paulo", callback_data='M1')],
-        [InlineKeyboardButton(text="Inserir novo foco de enchente", callback_data='M2')],
-        [InlineKeyboardButton(text="Cadastrar", callback_data='M3')],
-        [InlineKeyboardButton(text="Compartilhar", callback_data='M4')],
-    ]
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    text, reply_markup = MH.get_reply_keyboard()
+
+    # bot.send_message(
+    #     chat_id=MH.get_user_id(),
+    #     text="Olá, {}!".format(MH.get_username()),
+    #     reply_markup=reply_markup
+    # )
 
     bot.send_message(
         chat_id=MH.get_user_id(),
-        text="Olá, {}!".format(MH.get_username()),
+        text=text,
         reply_markup=reply_markup
     )
 
@@ -66,11 +66,24 @@ class MessageHandle():
             self.is_callback_query = False
 
         print("is callback:",self.is_callback_query)
+
         self.bot_id = config["bot_id"]
         self.bot_name = config["bot_name"]
+
+        # configure from request json
         self._configure(request_json)
 
-        
+        # check if request is valid
+        self._validate()
+
+    def get_reply_keyboard(self):
+        if self.is_callback_query == True:
+            FFKeyboards = FloodFeel_Keyboards(self.callback_data)
+            return FFKeyboards.get_keyboard()
+        else:
+            print("Keyboards available only for callback requests")
+            return None
+
     def _configure(self,request_json):
         message = None
 
@@ -89,12 +102,14 @@ class MessageHandle():
         try:
             self.chat = message["chat"]
         except:
+            print("Failed on extracting chat")
             self.chat = None
         
         # request from info
         try:
             self.request_from = message["from"]
         except:
+            print("Failed on extracting request from data")
             self.request_from = None
 
         
@@ -130,7 +145,7 @@ class MessageHandle():
         else:
             return None
     
-    def is_valid(self):
+    def is_valid_request(self):
         return self.is_valid
 
 main(None)
