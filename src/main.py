@@ -78,11 +78,12 @@ class MessageHandle():
 
     def get_reply_keyboard(self):
         if self.is_callback_query == True:
-            FFKeyboards = FloodFeel_Keyboards(self.callback_data)
-            return FFKeyboards.get_keyboard()
+            FFKeyboards = FloodFeel_Keyboards(callback_data=self.callback_data)
         else:
-            print("Keyboards available only for callback requests")
-            return None
+            FFKeyboards = FloodFeel_Keyboards(message_text=self.message_text)
+        
+        return FFKeyboards.get_reply()
+            
 
     def _configure(self,request_json):
         message = None
@@ -96,7 +97,12 @@ class MessageHandle():
                 self.callback_data = None
                 print("Fail to configure requested callback")
         else: 
-            message =  request_json["message"]
+            message = request_json["message"]
+            try:
+                self.message_text = request_json["message"]["text"]
+            except:
+                self.message_text = None
+                print("Fail to configure requested message")
 
         # chat info
         try:
