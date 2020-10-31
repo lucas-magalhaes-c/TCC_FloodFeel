@@ -3,10 +3,12 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton,
 
 class FloodFeel_Keyboards():
 
-    def __init__(self,callback_data):
+    def __init__(self,callback_data=None,message_text=None):
         self.callback_data = callback_data
+        self.message_text = message_text
+        if callback_data == None and message_text == None:
+            print("Failed to get callback data or message text")
     
-
     def _start_long(self):
         self.text = "Olá, seja bem vindo(a) ao EnchentesBot! 🤖\nAqui você será informado(a) sobre os pontos de enchente na cidade de São Paulo e poderá contribuir informando novos locais de enchente.\n\nO que deseja fazer?"
         self.keyboard = InlineKeyboardMarkup([
@@ -17,7 +19,7 @@ class FloodFeel_Keyboards():
         ])
     
     def _start_short(self):
-        self.text = "Olá! O que deseja fazer?"
+        self.text = "Olá! O que deseja fazer? Por favor escolha um dos botões abaixo"
         self.keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(text="Consultar enchentes em São Paulo", callback_data='start_opt_1')],
             [InlineKeyboardButton(text="Inserir novo foco de enchente", callback_data='start_opt_2')],
@@ -40,9 +42,8 @@ class FloodFeel_Keyboards():
     
     def _start_opt_2_1(self):
         self.text = "Por favor, compartilhe a localização para sabermos o local da enchente"
-        self.keyboard = ReplyKeyboardMarkup([
-            [KeyboardButton(text="Compartilhar localização", callback_data='start_opt_2_1_1',request_location=True)],
-            [KeyboardButton(text="Voltar ao inicio", callback_data='start_short')]
+        self.keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton(text="Enviar localização", callback_data='start_short',request_location=True)]
         ])
     
     def _start_opt_2_1_1(self):
@@ -63,7 +64,7 @@ class FloodFeel_Keyboards():
             [InlineKeyboardButton(text="Voltar ao inicio", callback_data='start_short')]
         ])
 
-    def get_keyboard(self):
+    def get_reply(self,custom=None):
         switcher = {
             "start_long": self._start_long,
             "start_short": self._start_short,
@@ -76,8 +77,14 @@ class FloodFeel_Keyboards():
             "start_opt_4": None,
             "failed": self._failed
         }
-        # Get the function from switcher dictionary
-        chosen_keyboard_func = switcher.get(self.callback_data, lambda: "Invalid callback data")
+
+        if self.callback_data != None:
+            # Get the function from switcher dictionary
+            chosen_keyboard_func = switcher.get(self.callback_data, lambda: "Invalid callback data")
+        elif self.message_text == "/start":
+            chosen_keyboard_func = switcher.get("start_long", lambda: "Invalid callback data")
+        else:
+             chosen_keyboard_func = switcher.get("start_short", lambda: "Invalid callback data")
         
         if chosen_keyboard_func is not None:
             # executes the method defined from switcher
