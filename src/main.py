@@ -14,6 +14,8 @@ def main(request):
     if "-local" in sys.argv:
         if "-callback" in sys.argv:
             request_json = json.loads(open("debug/payload_callback.json").read())
+        if "-location" in sys.argv:
+            request_json = json.loads(open("debug/payload_location.json").read())
         else:
             request_json = json.loads(open("debug/payload.json").read())
     else:
@@ -58,14 +60,13 @@ def run_bot(request_json):
 
 class MessageHandle():
     def __init__(self,request_json,config):
-        
+        self.location = None
+
         try:
             request_json["callback_query"]
             self.is_callback_query = True
         except: 
             self.is_callback_query = False
-
-        print("is callback:",self.is_callback_query)
 
         self.bot_id = config["bot_id"]
         self.bot_name = config["bot_name"]
@@ -80,13 +81,17 @@ class MessageHandle():
         if self.is_callback_query == True:
             FFKeyboards = FloodFeel_Keyboards(callback_data=self.callback_data)
         else:
-            FFKeyboards = FloodFeel_Keyboards(message_text=self.message_text)
+            if self.location != None:
+                FFKeyboards = FloodFeel_Keyboards(has_location=True)
+            else:
+                FFKeyboards = FloodFeel_Keyboards(message_text=self.message_text)
         
         return FFKeyboards.get_reply()
             
 
     def _configure(self,request_json):
         message = None
+        self.location = None
 
         if self.is_callback_query == True:
             message = request_json["callback_query"]["message"]
@@ -117,6 +122,10 @@ class MessageHandle():
         except:
             print("Failed on extracting request from data")
             self.request_from = None
+
+        # geolocation info
+        if "location" in message:
+            self.location = message["location"]
 
         
     def _validate(self):
