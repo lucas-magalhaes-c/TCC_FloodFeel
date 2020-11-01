@@ -126,7 +126,20 @@ class FloodFeel_Keyboards():
             return self.text, self.keyboard
 
 
-        
+
+import hashlib
+
+def hashText(text,salt=None):
+    """
+        Basic hashing function for a text
+            text -> Str
+            salt -> (optional) Str   
+    """
+    if salt != None:
+        return hashlib.sha256(salt.encode() + text.encode()).hexdigest()
+    else:
+        return hashlib.sha256(text.encode()).hexdigest()
+
 
  
  
