@@ -3,20 +3,20 @@
 # https://core.telegram.org/bots/api
 
 from telegram import Bot
-# from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 import requests
 import json
 import sys
-from custom_keyboards import FloodFeel_Keyboards
+from utils import FloodFeel_Keyboards, hashText
+import time 
 
+timestamp_ms = round(time.time() * 1000)
 
 def main(request):
     request_json = ""
     if "-local" in sys.argv:
-        if "-callback" in sys.argv:
-            request_json = json.loads(open("debug/payload_callback.json").read())
-        if "-location" in sys.argv:
-            request_json = json.loads(open("debug/payload_location.json").read())
+        if "-payload" in sys.argv:
+            payload = sys.argv[sys.argv.index("-payload") + 1]
+            request_json = json.loads(open("debug/payload_"+payload+".json").read())
         else:
             request_json = json.loads(open("debug/payload.json").read())
     else:
@@ -46,12 +46,6 @@ def run_bot(request_json):
 
     text, reply_markup = MH.get_reply_keyboard()
 
-    # bot.send_message(
-    #     chat_id=MH.get_user_id(),
-    #     text="Olá, {}!".format(MH.get_username()),
-    #     reply_markup=reply_markup
-    # )
-
     bot.send_message(
         chat_id=MH.get_user_id(),
         text=text,
@@ -62,8 +56,13 @@ def run_bot(request_json):
 class MessageHandle():
     def __init__(self,request_json,config):
         self.location = None
+        self.photo_data = None
         self.message_text = None
+        self.message = None
         self.callback_data = None
+        self.data_to_bq = {}
+        self.bq_table = None
+        self.hash_salt = config["hash_salt"]
 
         try:
             request_json["callback_query"]
@@ -80,6 +79,9 @@ class MessageHandle():
         # check if request is valid
         self._validate()
 
+        # configure data to be inserted on Big Query
+        self._configureBQData()
+
     def get_reply_keyboard(self):
         FFKeyboards = FloodFeel_Keyboards(callback_data=self.callback_data,message=self.message)
         
@@ -87,7 +89,6 @@ class MessageHandle():
             
     def _configure(self,request_json):
         message = None
-        self.location = None
 
         if self.is_callback_query == True:
             message = request_json["callback_query"]["message"]
@@ -124,6 +125,9 @@ class MessageHandle():
         if "location" in message:
             self.location = message["location"]
 
+        # photo info
+        if "photo" in message:
+            self.photo_data = message["photo"]
         
     def _validate(self):
         if self.is_callback_query:
@@ -159,6 +163,30 @@ class MessageHandle():
     
     def is_valid_request(self):
         return self.is_valid
+
+    def _configureBQData(self):
+        if self.location != None or self.photo_data != None:
+            self.data_to_bq["user_id_hash"] = hashText(text=str(self.get_user_id()), salt=self.hash_salt)
+            self.data_to_bq["timestamp_ms"] = timestamp_ms
+
+            if self.location != None:
+                # table to send the data
+                self.bq_table = "location"
+
+                self.data_to_bq["latitute"] = self.location["latitude"]
+                self.data_to_bq["longitude"] = self.location["longitude"]
+            elif self.photo_data != None:
+                # table to send the data
+                self.bq_table = "photo"
+
+                # pick the best quality photo in the list (the last element is the best)
+                best_photo = self.photo_data[-1]
+
+                self.data_to_bq["file_id"] = best_photo["file_id"]
+                self.data_to_bq["file_unique_id"] = best_photo["file_unique_id"]
+        
+        print(self.data_to_bq)
+
 
 if "-local" in sys.argv:
     main(None)
