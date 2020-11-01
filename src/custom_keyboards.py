@@ -3,12 +3,22 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton,
 
 class FloodFeel_Keyboards():
 
-    def __init__(self,callback_data=None,message_text=None,has_location=False):
+    def __init__(self,callback_data=None,message=None):
         self.callback_data = callback_data
-        self.message_text = message_text
-        self.has_location = has_location
+        self.message_text = None
+        self.has_location = False
+        self.is_photo = False
 
-        if callback_data == None and message_text == None and has_location == False:
+        if "location" in message:
+            self.has_location = True
+        
+        if "photo" in message:
+            self.is_photo = True
+        
+        if "text" in message:
+            self.message_text = message["text"]
+
+        if self.callback_data == None and self.message_text == None and self.has_location == False and self.is_photo == False:
             print("Failed to get callback data or message text")
     
     def _start_long(self):
@@ -55,7 +65,7 @@ class FloodFeel_Keyboards():
         ])
     
     def _start_opt_2_1_1_1(self):
-        self.text = "Foto recebida, muito obrigado por contribuir! \n\nAssim, estaremos juntos trabalhando para atenuar os efeitos das enchentes!"
+        self.text = "Foto recebida, muito obrigado por contribuir! \n\nJuntos somos mais fortes para atenuar os efeitos das enchentes 😊"
         self.keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(text="Cancelar envio", callback_data='start_short')]
         ])
@@ -80,6 +90,7 @@ class FloodFeel_Keyboards():
             "start_opt_2": self._start_opt_2,
             "start_opt_2_1": self._start_opt_2_1,
             "start_opt_2_1_1": self._start_opt_2_1_1,
+            "start_opt_2_1_1_1": self._start_opt_2_1_1_1,
             "start_opt_2_2": self._start_opt_2_2,
             "start_opt_3": None,
             "start_opt_4": None,
@@ -90,11 +101,13 @@ class FloodFeel_Keyboards():
             # Get the function from switcher dictionary
             chosen_keyboard_func = switcher.get(self.callback_data, lambda: "Invalid callback data")
         elif self.message_text == "/start":
-            chosen_keyboard_func = switcher.get("start_long", lambda: "Invalid callback data")
+            chosen_keyboard_func = switcher.get("start_long", lambda: "Invalid keyboard function 1")
         elif self.has_location == True:
-            chosen_keyboard_func = switcher.get("start_opt_2_1_1", lambda: "Invalid callback data")
+            chosen_keyboard_func = switcher.get("start_opt_2_1_1", lambda: "Invalid keyboard function 2")
+        elif self.is_photo == True:
+            chosen_keyboard_func = switcher.get("start_opt_2_1_1_1", lambda: "Invalid keyboard function 3")
         else:
-            chosen_keyboard_func = switcher.get("start_short", lambda: "Invalid callback data")
+            chosen_keyboard_func = switcher.get("start_short", lambda: "Invalid keyboard function 4")
         
         if chosen_keyboard_func is not None:
             # executes the method defined from switcher

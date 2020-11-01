@@ -9,6 +9,7 @@ import json
 import sys
 from custom_keyboards import FloodFeel_Keyboards
 
+
 def main(request):
     request_json = ""
     if "-local" in sys.argv:
@@ -61,6 +62,8 @@ def run_bot(request_json):
 class MessageHandle():
     def __init__(self,request_json,config):
         self.location = None
+        self.message_text = None
+        self.callback_data = None
 
         try:
             request_json["callback_query"]
@@ -78,17 +81,10 @@ class MessageHandle():
         self._validate()
 
     def get_reply_keyboard(self):
-        if self.is_callback_query == True:
-            FFKeyboards = FloodFeel_Keyboards(callback_data=self.callback_data)
-        else:
-            if self.location != None:
-                FFKeyboards = FloodFeel_Keyboards(has_location=True)
-            else:
-                FFKeyboards = FloodFeel_Keyboards(message_text=self.message_text)
+        FFKeyboards = FloodFeel_Keyboards(callback_data=self.callback_data,message=self.message)
         
         return FFKeyboards.get_reply()
             
-
     def _configure(self,request_json):
         message = None
         self.location = None
@@ -103,6 +99,7 @@ class MessageHandle():
                 print("Fail to configure requested callback")
         else: 
             message = request_json["message"]
+            self.message = message
             try:
                 self.message_text = request_json["message"]["text"]
             except:
