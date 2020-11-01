@@ -2,12 +2,13 @@
 # API
 # https://core.telegram.org/bots/api
 
+from utils import FloodFeel_Keyboards, hashText
 from telegram import Bot
 import requests
+import time 
 import json
 import sys
-from utils import FloodFeel_Keyboards, hashText
-import time 
+
 
 timestamp_ms = round(time.time() * 1000)
 local = False
@@ -43,13 +44,11 @@ def run_bot(request_json):
     # Initializes the message handle
     MH = MessageHandle(request_json=request_json,config=config)
 
-    if MH.is_valid_request() == False:
+    if MH.is_valid == False:
         return
 
     # Initializes the bot with the token
     bot = Bot(token=config["bot_token"]) 
-
-    MH.show_details()
 
     text, reply_markup = MH.get_reply_keyboard()
 
@@ -58,6 +57,12 @@ def run_bot(request_json):
         text=text,
         reply_markup=reply_markup
     )
+
+    if local:
+        MH.infos()
+    print("> Message sent")
+    
+
 
 
 class MessageHandle():
@@ -115,7 +120,6 @@ class MessageHandle():
                 self.message_text = request_json["message"]["text"]
             except:
                 self.message_text = None
-                print("Fail to configure requested message")
 
         # chat info
         try:
@@ -156,23 +160,12 @@ class MessageHandle():
             else:
                 self.is_valid = True
 
-    def show_details(self):
-        print("> Chat\nUser id: {}\nUser: {}".format(self.chat["id"],self.chat["first_name"]))
             
     def get_user_id(self):
         return self.chat["id"]
     
     def get_username(self):
         return self.chat["first_name"]
-
-    def get_callback_data(self):
-        if self.is_callback_query == True:
-            return self.callback_data
-        else:
-            return None
-    
-    def is_valid_request(self):
-        return self.is_valid
 
     def _configureBQData(self):
         if self.location != None or self.photo_data != None:
@@ -194,6 +187,9 @@ class MessageHandle():
 
                 self.data_to_bq["file_id"] = best_photo["file_id"]
                 self.data_to_bq["file_unique_id"] = best_photo["file_unique_id"]
+    def infos(self):
+        print(" **** INFOS ****\nchat_id:",self.chat["id"],"\nfirst_name:",self.chat["first_name"],"\nis_callback:",
+        self.callback_data != None,"\nis_location:",self.location != None,"\nis_photo:",self.photo_data != None)
     
 
 
