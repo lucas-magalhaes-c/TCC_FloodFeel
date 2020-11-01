@@ -1,6 +1,10 @@
 {
-    "bot_name": "<BOT_NAME>",
-    "telegram_bot_address": "t.me/<BOT_NAME>",
-    "bot_token": "<TOKEN>",
-    "setTelegramWebhook_url": "https://api.telegram.org/bot<YOURTOKEN>/setWebhook?url=<cloud_function_url>"
+    "bot_name": "<bot_name>",
+    "bot_id": "<bot_id>",
+    "telegram_bot_address": "t.me/<bot_name>",
+    "bot_token": "<token>",
+    "hash_salt": "<custom salt>",
+    "setTelegramWebhook_url": "https://api.telegram.org/bot<token>/setWebhook?url=<cloud_function_url>",
+    "getFilePath_url": "https://api.telegram.org/bot<token>/getFile?file_id=<file_id>",
+    "getFile_url": "https://api.telegram.org/file/bot<token>/<file_path>"
 }
