@@ -10,10 +10,13 @@ from utils import FloodFeel_Keyboards, hashText
 import time 
 
 timestamp_ms = round(time.time() * 1000)
+local = False
+if "-local" in sys.argv:
+    local = True
 
 def main(request):
     request_json = ""
-    if "-local" in sys.argv:
+    if local:
         if "-payload" in sys.argv:
             payload = sys.argv[sys.argv.index("-payload") + 1]
             request_json = json.loads(open("debug/payload_"+payload+".json").read())
@@ -30,8 +33,12 @@ def main(request):
     run_bot(request_json)
 
 def run_bot(request_json):
+    config = None
     # Get bot config data
-    config = json.loads(open("bot_config.json").read())
+    if local:
+        config = json.loads(open("bot_config_local.json").read())
+    else:
+        config = json.loads(open("bot_config.json").read())
 
     # Initializes the message handle
     MH = MessageHandle(request_json=request_json,config=config)
@@ -86,7 +93,10 @@ class MessageHandle():
         FFKeyboards = FloodFeel_Keyboards(callback_data=self.callback_data,message=self.message)
         
         return FFKeyboards.get_reply()
-            
+    
+    def get_data_to_bq(self):
+        return self.data_to_bq
+
     def _configure(self,request_json):
         message = None
 
@@ -184,11 +194,10 @@ class MessageHandle():
 
                 self.data_to_bq["file_id"] = best_photo["file_id"]
                 self.data_to_bq["file_unique_id"] = best_photo["file_unique_id"]
-        
-        print(self.data_to_bq)
+    
 
 
-if "-local" in sys.argv:
+if local:
     main(None)
 
 
