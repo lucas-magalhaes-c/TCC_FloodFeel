@@ -2,3 +2,5 @@
 # package>=version
 requests
 python_telegram_bot
+time
+hashlib
