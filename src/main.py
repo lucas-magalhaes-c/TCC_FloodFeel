@@ -2,7 +2,7 @@
 # API
 # https://core.telegram.org/bots/api
 
-from utils import FloodFeel_Keyboards, hashText
+from utils import FloodFeel_Keyboards, hashText, BigQueryHandler
 from telegram import Bot
 import requests
 import time 
@@ -46,10 +46,13 @@ def run_bot(request_json):
 
     if MH.is_valid == False:
         return
+    
+    # insert data into BigQuery (also creates a new table if it doesnt exist yet)
+    BQH = BigQueryHandler(config=config)
+    BQH.insert_data(data=MH.data_to_bq,table_type=MH.bq_table_type)
 
     # Initializes the bot with the token
     bot = Bot(token=config["bot_token"]) 
-
     text, reply_markup = MH.get_reply_keyboard()
 
     bot.send_message(
@@ -73,7 +76,7 @@ class MessageHandle():
         self.message = None
         self.callback_data = None
         self.data_to_bq = {}
-        self.bq_table = None
+        self.bq_table_type = None
         self.hash_salt = config["hash_salt"]
 
         try:
@@ -98,9 +101,6 @@ class MessageHandle():
         FFKeyboards = FloodFeel_Keyboards(callback_data=self.callback_data,message=self.message)
         
         return FFKeyboards.get_reply()
-    
-    def get_data_to_bq(self):
-        return self.data_to_bq
 
     def _configure(self,request_json):
         message = None
@@ -159,7 +159,6 @@ class MessageHandle():
                 print("Failed: request from bot")
             else:
                 self.is_valid = True
-
             
     def get_user_id(self):
         return self.chat["id"]
@@ -174,19 +173,20 @@ class MessageHandle():
 
             if self.location != None:
                 # table to send the data
-                self.bq_table = "location"
+                self.bq_table_type = "location"
 
                 self.data_to_bq["latitute"] = self.location["latitude"]
                 self.data_to_bq["longitude"] = self.location["longitude"]
             elif self.photo_data != None:
                 # table to send the data
-                self.bq_table = "photo"
+                self.bq_table_type = "photo"
 
                 # pick the best quality photo in the list (the last element is the best)
                 best_photo = self.photo_data[-1]
 
                 self.data_to_bq["file_id"] = best_photo["file_id"]
                 self.data_to_bq["file_unique_id"] = best_photo["file_unique_id"]
+    
     def infos(self):
         print(" **** INFOS ****\nchat_id:",self.chat["id"],"\nfirst_name:",self.chat["first_name"],"\nis_callback:",
         self.callback_data != None,"\nis_location:",self.location != None,"\nis_photo:",self.photo_data != None)
