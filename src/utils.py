@@ -1,5 +1,8 @@
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+import os
+import sys
+import json
 
 class FloodFeel_Keyboards():
 
@@ -128,7 +131,6 @@ class FloodFeel_Keyboards():
 
 
 import hashlib
-
 def hashText(text,salt=None):
     """
         Basic hashing function for a text
@@ -141,5 +143,100 @@ def hashText(text,salt=None):
         return hashlib.sha256(text.encode()).hexdigest()
 
 
- 
- 
+
+from datetime import datetime
+from google.cloud import bigquery
+import google.auth
+
+class BigQueryHandler():
+    def __init__(self,config):
+        self.bq_project = config["bq_project"]
+        self.dataset_id =  self.bq_project["dataset_id"]
+        self.table_id_patterns = self.bq_project["table_id_patterns"]
+
+        service_account_path = 'service_account.json'
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = service_account_path
+
+        # open and load service account & project id
+        sa_file = open(service_account_path)
+        sa_json = json.loads(sa_file.read())
+        self.project_id = sa_json['project_id']
+
+        # Both APIs must be enabled for your project before running this code.
+        # credentials, project = google.auth.default(
+        #         scopes=[
+        #             "https://www.googleapis.com/auth/bigquery",
+        #         ]
+        # )
+
+        # Create a client
+        self.client = bigquery.Client.from_service_account_json(service_account_path)
+        # self.client = bigquery.Client(credentials=credentials, project=project_id)
+    
+    def insert_data(self, data, table_type):
+        dateYYYYMMDD = datetime.today().strftime('%Y%m%d')
+
+        # Table id in the format TABLE_YYYYMMDD
+        self.table_id = self.table_id_patterns[table_type] + dateYYYYMMDD 
+
+        try:
+            table_exists = self.client.get_table(self.project_id+"."+self.dataset_id+"."+self.table_id)
+        except:
+            # Table not exist yet, so lets create it
+
+            schema = self._getSchema(table_type)
+
+            new_table = bigquery.Table(self.project_id+"."+self.dataset_id+"."+self.table_id, schema=schema)
+            new_table = self.client.create_table(new_table)  # Make an API request.
+        
+        #TODO: insert data 
+            
+    
+    def _get_query(self,data,table,mode):
+        queries = self.bq_project["queries"]
+        
+        try:
+            path = queries[table][mode]+'.sql'
+        except:
+            print("Failed on getting query path")
+            return None
+
+        if "-local" in sys.argv:
+            path = "queries/" + path
+        
+        fd = open(path, 'r')
+        query = fd.read()
+        fd.close()
+
+        # setup query for location data
+        if table == "location":
+            query = self._setup_location_query(query,data)
+        elif table == "photo":
+            query = self._setup_photo_query(query,data)
+
+        return query
+    
+    def _setup_location_query(query,data):
+        # query.replace
+        #TODO
+        return
+    
+    def _getSchema(self,table):
+        if table == "location":
+            return [
+                bigquery.SchemaField("user_id_hash", "STRING", mode="REQUIRED"),
+                bigquery.SchemaField("timestamp_ms", "INTEGER", mode="REQUIRED"),
+                bigquery.SchemaField("latitude", "FLOAT", mode="REQUIRED"),
+                bigquery.SchemaField("longitude", "FLOAT", mode="REQUIRED"),
+            ]
+        elif table == "photo":
+            return [
+                bigquery.SchemaField("user_id_hash", "STRING", mode="REQUIRED"),
+                bigquery.SchemaField("timestamp_ms", "INTEGER", mode="REQUIRED"),
+                bigquery.SchemaField("file_id", "FLOAT", mode="REQUIRED"),
+                bigquery.SchemaField("file_unique_id", "FLOAT", mode="REQUIRED"),
+            ]
+        else:
+            None
+    
+    
