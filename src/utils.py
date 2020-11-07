@@ -257,4 +257,55 @@ from firebase_admin import firestore
 
 
 
+class FirestoreHandler():
+    def __init__(self):
+        service_account_path = 'service_account.json'
 
+        # open and load service account & project id
+        sa_file = open(service_account_path)
+        sa_json = json.loads(sa_file.read())
+        project_id = sa_json['project_id']
+
+        if "-local" not in sys.argv:
+            # Use the application default credentials, in GCP
+            cred = credentials.ApplicationDefault()
+            firebase_admin.initialize_app(cred, {
+            'projectId': project_id,
+            })
+
+            self.db = firestore.client()
+        else:
+            # Testing locally
+            # Use a service account
+            cred = credentials.Certificate('service_account.json')
+            firebase_admin.initialize_app(cred)
+
+            self.db = firestore.client()
+    
+    def add_document_to_collection(self,collection,data,data_type):
+        # doc_ref = db.collection(u'users').document(u'alovelace')
+        # doc_ref.set({
+        #     u'first': u'Ada',
+        #     u'last': u'Lovelace',
+        #     u'born': 1815
+        # })
+        doc_ref = self.db.collection(collection).document(data["user_id_hash"])
+
+        if data_type == "photo":
+            doc_ref.update({
+                'photo_date': data["date"],
+                'user_id_hash': data["user_id_hash"],
+                'photo_timestamp_ms': data["timestamp_ms"],
+                'file_id': data["file_id"],
+                'file_unique_id': data["file_unique_id"],
+            })
+        elif data_type == "location":
+            doc_ref.set({
+                'location_date': data["date"],
+                'user_id_hash': data["user_id_hash"],
+                'location_timestamp_ms': data["timestamp_ms"],
+                'latitude': data["latitude"],
+                'longitude': data["longitude"],
+            })
+        else:
+            print(f"data_type not recognized {data_type}")
