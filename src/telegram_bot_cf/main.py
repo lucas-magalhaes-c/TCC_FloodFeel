@@ -17,9 +17,9 @@ def main(request):
     if local:
         if "-payload" in sys.argv:
             payload = sys.argv[sys.argv.index("-payload") + 1]
-            request_json = json.loads(open("debug/payload_"+payload+".json").read())
+            request_json = json.loads(open("../debug/payload_"+payload+".json").read())
         else:
-            request_json = json.loads(open("debug/payload.json").read())
+            request_json = json.loads(open("../debug/payload.json").read())
     else:
         request_json = request.get_json()
         print(request_json)
@@ -48,8 +48,10 @@ def run_bot(request_json):
     # BQH = BigQueryHandler(config=config)
     # BQH.insert_data(data=MH.data_to_bq,table_type=MH.data_type)
 
-    FH = FirestoreHandler()
-    FH.add_document_to_collection(collection="bot_data",data=MH.data_to_bq,data_type=MH.data_type)
+    # On existence, send to Firestore
+    if MH.data_to_store != {}:
+        FH = FirestoreHandler()
+        FH.add_document_to_collection(collection="bot_data",data=MH.data_to_store,data_type=MH.data_type)
 
     # Initializes the bot with the token and get the keyboard
     bot = Bot(token=config["bot_token"]) 
@@ -69,5 +71,3 @@ def run_bot(request_json):
 
 if local:
     main(None)
-
-
