@@ -292,13 +292,13 @@ class FirestoreHandler():
         doc_ref = self.db.collection(collection).document(data["user_id_hash"])
 
         if data_type == "photo":
-            doc_ref.update({
+            doc_ref.set({
                 'photo_date': data["date"],
                 'user_id_hash': data["user_id_hash"],
                 'photo_timestamp_ms': data["timestamp_ms"],
                 'file_id': data["file_id"],
                 'file_unique_id': data["file_unique_id"],
-            })
+            },merge=True)
         elif data_type == "location":
             doc_ref.set({
                 'location_date': data["date"],
@@ -306,6 +306,6 @@ class FirestoreHandler():
                 'location_timestamp_ms': data["timestamp_ms"],
                 'latitude': data["latitude"],
                 'longitude': data["longitude"],
-            })
+            },merge=True)
         else:
             print(f"data_type not recognized {data_type}")
