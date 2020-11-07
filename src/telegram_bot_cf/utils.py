@@ -12,13 +12,13 @@ class FloodFeel_Keyboards():
         self.has_location = False
         self.is_photo = False
 
-        if "location" in message:
+        if message != None and "location" in message:
             self.has_location = True
         
-        if "photo" in message:
+        if message != None and "photo" in message:
             self.is_photo = True
         
-        if "text" in message:
+        if message != None and "text" in message:
             self.message_text = message["text"]
 
         if self.callback_data == None and self.message_text == None and self.has_location == False and self.is_photo == False:
@@ -57,9 +57,11 @@ class FloodFeel_Keyboards():
     
     def _start_opt_2_1(self):
         self.text = "Por favor, compartilhe a localização para sabermos o local da enchente"
-        self.keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(text="Enviar localização", callback_data='start_short',request_location=True)]
-        ])
+        print("onetime")
+        self.keyboard = ReplyKeyboardMarkup([
+            [KeyboardButton(text="Enviar localização", callback_data='start_opt_2_1_1',request_location=True)],
+            [KeyboardButton(text="Cancelar", callback_data='start_short')]
+        ],one_time_keyboard=True)
     
     def _start_opt_2_1_1(self):
         self.text = "Localização recebida! \n\nAgora por favor nos envie uma foto da enchente. Tente mostrar bem a situação.\n\nCaso não seja possível, você pode cancelar o envio"
@@ -70,7 +72,7 @@ class FloodFeel_Keyboards():
     def _start_opt_2_1_1_1(self):
         self.text = "Foto recebida, muito obrigado por contribuir! \n\nJuntos somos mais fortes para atenuar os efeitos das enchentes 😊"
         self.keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(text="Cancelar envio", callback_data='start_short')]
+            [InlineKeyboardButton(text="Voltar ao inicio", callback_data='start_short')]
         ])
     
     def _start_opt_2_2(self):
