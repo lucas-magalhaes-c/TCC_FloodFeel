@@ -1,0 +1,8 @@
+{
+    "bot_name": "<bot_name>",
+    "bot_id": "<bot_id>",
+    "telegram_bot_address": "t.me/<bot_name>",
+    "bot_token": "<token>",
+    "getFilePath_url": "https://api.telegram.org/bot<token>/getFile?file_id=<file_id>",
+    "getFile_url": "https://api.telegram.org/file/bot<token>/<file_path>"
+}
