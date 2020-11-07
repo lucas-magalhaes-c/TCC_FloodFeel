@@ -179,17 +179,27 @@ class BigQueryHandler():
         # Table id in the format TABLE_YYYYMMDD
         self.table_id = self.table_id_patterns[table_type] + dateYYYYMMDD 
 
+        table_full_path = self.project_id+"."+self.dataset_id+"."+self.table_id
+
+        # Check if table already exists
         try:
-            table_exists = self.client.get_table(self.project_id+"."+self.dataset_id+"."+self.table_id)
+            table_exists = self.client.get_table(table_full_path)
         except:
-            # Table not exist yet, so lets create it
+            # Table doesnt exist, lets create it
 
             schema = self._getSchema(table_type)
 
-            new_table = bigquery.Table(self.project_id+"."+self.dataset_id+"."+self.table_id, schema=schema)
+            new_table = bigquery.Table(table_full_path, schema=schema)
             new_table = self.client.create_table(new_table)  # Make an API request.
+            
         
-        #TODO: insert data 
+        print([data])
+        try:
+            status = self.client.insert_rows_json(table_full_path, [data]) # Make an API request.
+            print(status)
+        except:
+            print("Failed to insert data into BigQuery")
+            
             
     
     def _get_query(self,data,table,mode):
@@ -221,22 +231,30 @@ class BigQueryHandler():
         #TODO
         return
     
-    def _getSchema(self,table):
-        if table == "location":
+    def _getSchema(self,table_type):
+        if table_type == "location":
             return [
+                bigquery.SchemaField("date", "DATE", mode="REQUIRED"),
                 bigquery.SchemaField("user_id_hash", "STRING", mode="REQUIRED"),
                 bigquery.SchemaField("timestamp_ms", "INTEGER", mode="REQUIRED"),
                 bigquery.SchemaField("latitude", "FLOAT", mode="REQUIRED"),
                 bigquery.SchemaField("longitude", "FLOAT", mode="REQUIRED"),
             ]
-        elif table == "photo":
+        elif table_type == "photo":
             return [
+                bigquery.SchemaField("date", "DATE", mode="REQUIRED"),
                 bigquery.SchemaField("user_id_hash", "STRING", mode="REQUIRED"),
                 bigquery.SchemaField("timestamp_ms", "INTEGER", mode="REQUIRED"),
-                bigquery.SchemaField("file_id", "FLOAT", mode="REQUIRED"),
-                bigquery.SchemaField("file_unique_id", "FLOAT", mode="REQUIRED"),
+                bigquery.SchemaField("file_id", "STRING", mode="REQUIRED"),
+                bigquery.SchemaField("file_unique_id", "STRING", mode="REQUIRED"),
             ]
         else:
             None
     
-    
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
+
+
+
