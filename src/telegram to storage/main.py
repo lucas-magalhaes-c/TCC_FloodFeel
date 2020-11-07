@@ -8,9 +8,10 @@ import sys
 def main(request):
     request_json = ""
     config = None
+
     if "-local" in sys.argv:
         request_json = json.loads(open("../debug/telegram_to_storage_req.json").read())
-        config = json.loads(open("../bot_config.json").read())
+        config = json.loads(open("bot_config_local.json").read())
     else:
         request_json = request.get_json()
 
@@ -18,6 +19,12 @@ def main(request):
         config = json.loads(open("bot_config.json").read())
     
     token = config["bot_token"]
+
+    
+    if "-id" in sys.argv: # local debug
+        file_id = sys.argv[sys.argv.index("-id") + 1]
+        request_json = {"file_ids":[]}
+        request_json["file_ids"].append(file_id)
 
     for file_id in request_json["file_ids"]:
 
