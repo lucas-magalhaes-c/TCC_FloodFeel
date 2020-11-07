@@ -154,7 +154,7 @@ class MessageHandle():
         self.message_text = None
         self.message = None
         self.callback_data = None
-        self.data_to_bq = {}
+        self.data_to_store = {}
         self.data_type = None
         self.hash_salt = config["hash_salt"]
 
@@ -174,7 +174,8 @@ class MessageHandle():
         self._validate()
 
         # configure data to be inserted on Big Query
-        self._configureBQData()
+        if self.location != None or self.photo_data != None:
+            self._configure_data_to_store()
 
     def get_reply_keyboard(self):
         FFKeyboards = FloodFeel_Keyboards(callback_data=self.callback_data,message=self.message)
@@ -245,27 +246,27 @@ class MessageHandle():
     def get_username(self):
         return self.chat["first_name"]
 
-    def _configureBQData(self):
-        if self.location != None or self.photo_data != None:
-            self.data_to_bq["date"] = date
-            self.data_to_bq["user_id_hash"] = hashText(text=str(self.get_user_id()), salt=self.hash_salt)
-            self.data_to_bq["timestamp_ms"] = timestamp_ms
+    def _configure_data_to_store(self):
+        
+        self.data_to_store["date"] = date
+        self.data_to_store["user_id_hash"] = hashText(text=str(self.get_user_id()), salt=self.hash_salt)
+        self.data_to_store["timestamp_ms"] = timestamp_ms
 
-            if self.location != None:
-                # table to send the data
-                self.data_type = "location"
+        if self.location != None:
+            # table to send the data
+            self.data_type = "location"
 
-                self.data_to_bq["latitude"] = self.location["latitude"]
-                self.data_to_bq["longitude"] = self.location["longitude"]
-            elif self.photo_data != None:
-                # table to send the data
-                self.data_type = "photo"
+            self.data_to_store["latitude"] = self.location["latitude"]
+            self.data_to_store["longitude"] = self.location["longitude"]
+        elif self.photo_data != None:
+            # table to send the data
+            self.data_type = "photo"
 
-                # pick the best quality photo in the list (the last element is the best)
-                best_photo = self.photo_data[-1]
+            # pick the best quality photo in the list (the last element is the best)
+            best_photo = self.photo_data[-1]
 
-                self.data_to_bq["file_id"] = best_photo["file_id"]
-                self.data_to_bq["file_unique_id"] = best_photo["file_unique_id"]
+            self.data_to_store["file_id"] = best_photo["file_id"]
+            self.data_to_store["file_unique_id"] = best_photo["file_unique_id"]
     
     def infos(self):
         print(" **** INFOS ****\nchat_id:",self.chat["id"],"\nfirst_name:",self.chat["first_name"],"\nis_callback:",
