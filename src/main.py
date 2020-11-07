@@ -2,7 +2,8 @@
 # API
 # https://core.telegram.org/bots/api
 
-from utils import FloodFeel_Keyboards, hashText, BigQueryHandler
+from utils import FloodFeel_Keyboards, hashText, BigQueryHandler, FirestoreHandler
+from datetime import datetime
 from telegram import Bot
 import requests
 import time 
@@ -14,6 +15,7 @@ timestamp_ms = round(time.time() * 1000)
 local = False
 if "-local" in sys.argv:
     local = True
+date = datetime.today().strftime('%Y-%m-%d')
 
 def main(request):
     request_json = ""
@@ -48,18 +50,21 @@ def run_bot(request_json):
         return
     
     # insert data into BigQuery (also creates a new table if it doesnt exist yet)
-    BQH = BigQueryHandler(config=config)
-    BQH.insert_data(data=MH.data_to_bq,table_type=MH.bq_table_type)
+    # BQH = BigQueryHandler(config=config)
+    # BQH.insert_data(data=MH.data_to_bq,table_type=MH.bq_table_type)
+
+    FH = FirestoreHandler()
+    FH.add_document_to_collection(collection="photos",data=MH.data_to_bq,data_type=MH.bq_table_type)
 
     # Initializes the bot with the token
-    bot = Bot(token=config["bot_token"]) 
-    text, reply_markup = MH.get_reply_keyboard()
+    # bot = Bot(token=config["bot_token"]) 
+    # text, reply_markup = MH.get_reply_keyboard()
 
-    bot.send_message(
-        chat_id=MH.get_user_id(),
-        text=text,
-        reply_markup=reply_markup
-    )
+    # bot.send_message(
+    #     chat_id=MH.get_user_id(),
+    #     text=text,
+    #     reply_markup=reply_markup
+    # )
 
     if local:
         MH.infos()
@@ -168,6 +173,7 @@ class MessageHandle():
 
     def _configureBQData(self):
         if self.location != None or self.photo_data != None:
+            self.data_to_bq["date"] = date
             self.data_to_bq["user_id_hash"] = hashText(text=str(self.get_user_id()), salt=self.hash_salt)
             self.data_to_bq["timestamp_ms"] = timestamp_ms
 
@@ -175,7 +181,7 @@ class MessageHandle():
                 # table to send the data
                 self.bq_table_type = "location"
 
-                self.data_to_bq["latitute"] = self.location["latitude"]
+                self.data_to_bq["latitude"] = self.location["latitude"]
                 self.data_to_bq["longitude"] = self.location["longitude"]
             elif self.photo_data != None:
                 # table to send the data
