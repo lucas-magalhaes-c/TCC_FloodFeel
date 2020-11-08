@@ -17,23 +17,26 @@ def main (request):
 
     FH = FirestoreHandler()
     docs = FH.get_documents(
-        collection='bot_data', 
-        field='location_date', 
-        operator='==', 
-        field_value=date,
-        sent_to_bq=False
+        collection='bot_data'
     )
 
-    doc_ids = []
-    data = []
+    doc_ids_separated_by_date = {}
+    data_separated_by_date = {}
     schema = []
+    
     for doc in docs:
-        doc_ids.append(doc.id)
-        
+  
         doc_dict = doc.to_dict()
+        
+        # create a date on the data list
+        if doc_dict["location_date"] not in data_separated_by_date:
+            data_separated_by_date[doc_dict["location_date"]] = []
+            doc_ids_separated_by_date[doc_dict["location_date"]] = []
+
+        doc_ids_separated_by_date[doc_dict["location_date"]].append(doc.id)
 
         # inserts in the Big Query Schema order
-        data.append({
+        data_separated_by_date[doc_dict["location_date"]].append({
             "location_date": doc_dict["location_date"],
             "user_id_hash": doc_dict["user_id_hash"],
             "location_timestamp_ms": doc_dict["location_timestamp_ms"],
@@ -45,21 +48,22 @@ def main (request):
             "file_unique_id": doc_dict["file_unique_id"]
         })
 
+    if data_separated_by_date == []:
+        print("No data to upload into bq")
+        return
+
     # Starts BQ Handler, insert data and checks if data is upload successfuly
     BQ = BigQueryHandler(config)
-    success = BQ.insert_data(data, "bot_data_fs")
+    for date in data_separated_by_date:
+        success = BQ.insert_data(data=data_separated_by_date[date], table_type="bot_data_fs",table_date=date)
 
-    if success == True:
-        #TODO: update data in Firestore
-        print("Done. Data was sent to Big Query")
-    else:
-        print("Failed. Data wasn't sent to Big Query")
-    
-    # for doc in docs:
-    #     print(f'{doc.id} => {doc.to_dict()}')
+        if success == True:
+            # Update fs_state to sent to bq for all docs
+            FH.set_sent_to_bq_fs_state(collection='bot_data', doc_ids=doc_ids_separated_by_date[date])
+            print(f"Done. Data from date {date} was sent to Big Query")
+        else:
+            print(f"Failed. Data from date {date} wasn't sent to Big Query")
     
     
-
-
 if "-local" in sys.argv:
     main(None)
