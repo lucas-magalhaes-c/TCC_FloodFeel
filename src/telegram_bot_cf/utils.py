@@ -274,120 +274,10 @@ class MessageHandle():
         print(" **** INFOS ****\nchat_id:",self.chat["id"],"\nfirst_name:",self.chat["first_name"],"\nis_callback:",
         self.callback_data != None,"\nis_location:",self.location != None,"\nis_photo:",self.photo_data != None)
 
-
-
-from datetime import datetime
-from google.cloud import bigquery
-import google.auth
-
-class BigQueryHandler():
-    def __init__(self,config):
-        self.bq_project = config["bq_project"]
-        self.dataset_id =  self.bq_project["dataset_id"]
-        self.table_id_patterns = self.bq_project["table_id_patterns"]
-
-        service_account_path = 'service_account.json'
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = service_account_path
-
-        # open and load service account & project id
-        sa_file = open(service_account_path)
-        sa_json = json.loads(sa_file.read())
-        self.project_id = sa_json['project_id']
-
-        # Both APIs must be enabled for your project before running this code.
-        # credentials, project = google.auth.default(
-        #         scopes=[
-        #             "https://www.googleapis.com/auth/bigquery",
-        #         ]
-        # )
-
-        # Create a client
-        self.client = bigquery.Client.from_service_account_json(service_account_path)
-        # self.client = bigquery.Client(credentials=credentials, project=project_id)
-    
-    def insert_data(self, data, table_type):
-        dateYYYYMMDD = datetime.today().strftime('%Y%m%d')
-
-        # Table id in the format TABLE_YYYYMMDD
-        self.table_id = self.table_id_patterns[table_type] + dateYYYYMMDD 
-
-        table_full_path = self.project_id+"."+self.dataset_id+"."+self.table_id
-
-        # Check if table already exists
-        try:
-            table_exists = self.client.get_table(table_full_path)
-        except:
-            # Table doesnt exist, lets create it
-
-            schema = self._getSchema(table_type)
-
-            new_table = bigquery.Table(table_full_path, schema=schema)
-            new_table = self.client.create_table(new_table)  # Make an API request.
-            
-        
-        print([data])
-        try:
-            status = self.client.insert_rows_json(table_full_path, [data]) # Make an API request.
-            print(status)
-        except:
-            print("Failed to insert data into BigQuery")
-            
-            
-    
-    def _get_query(self,data,table,mode):
-        queries = self.bq_project["queries"]
-        
-        try:
-            path = queries[table][mode]+'.sql'
-        except:
-            print("Failed on getting query path")
-            return None
-
-        if "-local" in sys.argv:
-            path = "queries/" + path
-        
-        fd = open(path, 'r')
-        query = fd.read()
-        fd.close()
-
-        # setup query for location data
-        if table == "location":
-            query = self._setup_location_query(query,data)
-        elif table == "photo":
-            query = self._setup_photo_query(query,data)
-
-        return query
-    
-    def _setup_location_query(query,data):
-        # query.replace
-        #TODO
-        return
-    
-    def _getSchema(self,table_type):
-        if table_type == "location":
-            return [
-                bigquery.SchemaField("date", "DATE", mode="REQUIRED"),
-                bigquery.SchemaField("user_id_hash", "STRING", mode="REQUIRED"),
-                bigquery.SchemaField("timestamp_ms", "INTEGER", mode="REQUIRED"),
-                bigquery.SchemaField("latitude", "FLOAT", mode="REQUIRED"),
-                bigquery.SchemaField("longitude", "FLOAT", mode="REQUIRED"),
-            ]
-        elif table_type == "photo":
-            return [
-                bigquery.SchemaField("date", "DATE", mode="REQUIRED"),
-                bigquery.SchemaField("user_id_hash", "STRING", mode="REQUIRED"),
-                bigquery.SchemaField("timestamp_ms", "INTEGER", mode="REQUIRED"),
-                bigquery.SchemaField("file_id", "STRING", mode="REQUIRED"),
-                bigquery.SchemaField("file_unique_id", "STRING", mode="REQUIRED"),
-            ]
-        else:
-            None
     
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-
-
 
 class FirestoreHandler():
     def __init__(self):
@@ -415,12 +305,12 @@ class FirestoreHandler():
             self.db = firestore.client()
     
     def add_document_to_collection(self,collection,data,data_type):
-        # doc_ref = db.collection(u'users').document(u'alovelace')
-        # doc_ref.set({
-        #     u'first': u'Ada',
-        #     u'last': u'Lovelace',
-        #     u'born': 1815
-        # })
+        fs_state = {
+            1: "Waiting for ML check",
+            2: "ML check, waiting to send to BQ",
+            3: "ML check, sent to BQ"
+        }
+
         doc_ref = self.db.collection(collection).document(data["user_id_hash"])
 
         if data_type == "photo":
@@ -430,6 +320,7 @@ class FirestoreHandler():
                 'photo_timestamp_ms': data["timestamp_ms"],
                 'file_id': data["file_id"],
                 'file_unique_id': data["file_unique_id"],
+                'fs_state': 1
             },merge=True)
         elif data_type == "location":
             doc_ref.set({
@@ -441,3 +332,43 @@ class FirestoreHandler():
             },merge=True)
         else:
             print(f"data_type not recognized {data_type}")
+    
+    def get_documents(self,collection,field,operator,field_value):
+        fs_state = {
+            1: "Waiting for ML check",
+            2: "ML check, waiting to send to BQ",
+            3: "ML check, sent to BQ"
+        }
+        
+        # Create a reference to the bot data
+        bot_data_ref = self.db.collection(collection)
+
+        try:
+            bot_data_ref = bot_data_ref.where(u'fs_state', u'==', 2)
+            bot_data_ref = bot_data_ref.where(field, operator, field_value)
+            
+        except Exception as e:
+            print("Failed on getting documents\n",e)
+            return None
+
+        docs = bot_data_ref.stream()
+
+        # for doc in docs:
+        #     print(f'{doc.id} => {doc.to_dict()}')
+        
+        return docs
+    
+    def set_sent_to_bq_fs_state(self, collection, doc_ids):
+        fs_state = {
+            1: "Waiting for ML check",
+            2: "ML check, waiting to send to BQ",
+            3: "ML check, sent to BQ"
+        }
+
+        for doc_id in doc_ids:
+            doc_ref = self.db.collection(collection).document(doc_id)
+
+            doc_ref.set({
+                'fs_state': 3
+            },merge=True)
+        
