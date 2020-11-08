@@ -34,11 +34,12 @@ class BigQueryHandler():
         self.client = bigquery.Client.from_service_account_json(service_account_path)
         # self.client = bigquery.Client(credentials=credentials, project=project_id)
     
-    def insert_data(self, data, table_type):
-        dateYYYYMMDD = datetime.today().strftime('%Y%m%d')
+    def insert_data(self, data, table_type, table_date):
+        
+        dateYYYYMMDD = table_date.replace("-","")
 
         # Table id in the format TABLE_YYYYMMDD
-        self.table_id = self.table_id_patterns[table_type] + "20201106"
+        self.table_id = self.table_id_patterns[table_type] + dateYYYYMMDD
 
         table_full_path = self.project_id+"."+self.dataset_id+"."+self.table_id
 
@@ -64,36 +65,6 @@ class BigQueryHandler():
         except Exception as e:
             print("Failed to insert data into BigQuery\n",e)
             return False
-
-
-    def _get_query(self,data,table,mode):
-        queries = self.bq_project["queries"]
-        
-        try:
-            path = queries[table][mode]+'.sql'
-        except:
-            print("Failed on getting query path")
-            return None
-
-        if "-local" in sys.argv:
-            path = "queries/" + path
-        
-        fd = open(path, 'r')
-        query = fd.read()
-        fd.close()
-
-        # setup query for location data
-        if table == "location":
-            query = self._setup_location_query(query,data)
-        elif table == "photo":
-            query = self._setup_photo_query(query,data)
-
-        return query
-    
-    def _setup_location_query(query,data):
-        # query.replace
-        #TODO
-        return
     
     def _getSchema(self,table_type):
         if table_type == "bot_data_fs":
@@ -112,11 +83,12 @@ class BigQueryHandler():
             print("Schema not found for the table type")
             None
     
+
+
+
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-
-
 
 class FirestoreHandler():
     def __init__(self):
@@ -144,12 +116,12 @@ class FirestoreHandler():
             self.db = firestore.client()
     
     def add_document_to_collection(self,collection,data,data_type):
-        # doc_ref = db.collection(u'users').document(u'alovelace')
-        # doc_ref.set({
-        #     u'first': u'Ada',
-        #     u'last': u'Lovelace',
-        #     u'born': 1815
-        # })
+        fs_state = {
+            1: "Waiting for ML check",
+            2: "ML check, waiting to send to BQ",
+            3: "ML check, sent to BQ"
+        }
+
         doc_ref = self.db.collection(collection).document(data["user_id_hash"])
 
         if data_type == "photo":
@@ -159,7 +131,7 @@ class FirestoreHandler():
                 'photo_timestamp_ms': data["timestamp_ms"],
                 'file_id': data["file_id"],
                 'file_unique_id': data["file_unique_id"],
-                'set_to_bq': False
+                'fs_state': 1
             },merge=True)
         elif data_type == "location":
             doc_ref.set({
@@ -172,14 +144,18 @@ class FirestoreHandler():
         else:
             print(f"data_type not recognized {data_type}")
     
-    def get_documents(self,collection,field,operator,field_value,sent_to_bq=False):
-
+    def get_documents(self,collection):
+        fs_state = {
+            1: "Waiting for ML check",
+            2: "ML check, waiting to send to BQ",
+            3: "ML check, sent to BQ"
+        }
+        
         # Create a reference to the bot data
         bot_data_ref = self.db.collection(collection)
 
         try:
-            bot_data_ref = bot_data_ref.where(u'sent_to_bq', "==", sent_to_bq)
-            bot_data_ref = bot_data_ref.where(field, operator, field_value)
+            bot_data_ref = bot_data_ref.where(u'fs_state', u'==', 2)
             
         except Exception as e:
             print("Failed on getting documents\n",e)
@@ -191,4 +167,18 @@ class FirestoreHandler():
         #     print(f'{doc.id} => {doc.to_dict()}')
         
         return docs
+    
+    def set_sent_to_bq_fs_state(self, collection, doc_ids):
+        fs_state = {
+            1: "Waiting for ML check",
+            2: "ML check, waiting to send to BQ",
+            3: "ML check, sent to BQ"
+        }
+
+        for doc_id in doc_ids:
+            doc_ref = self.db.collection(collection).document(doc_id)
+
+            doc_ref.set({
+                'fs_state': 3
+            },merge=True)
         
