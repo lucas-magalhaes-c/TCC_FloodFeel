@@ -333,7 +333,7 @@ class FirestoreHandler():
         else:
             print(f"data_type not recognized {data_type}")
     
-    def get_documents(self,collection,field,operator,field_value):
+    def get_documents(self,collection):
         fs_state = {
             1: "Waiting for ML check",
             2: "ML check, waiting to send to BQ",
@@ -345,7 +345,6 @@ class FirestoreHandler():
 
         try:
             bot_data_ref = bot_data_ref.where(u'fs_state', u'==', 2)
-            bot_data_ref = bot_data_ref.where(field, operator, field_value)
             
         except Exception as e:
             print("Failed on getting documents\n",e)
