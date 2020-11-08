@@ -1,0 +1,15 @@
+{
+    "bot_name": "<bot_name>",
+    "bot_id": "<bot_id>",
+    "telegram_bot_address": "t.me/<bot_name>",
+    "bot_token": "<token>",
+    "setTelegramWebhook_url": "https://api.telegram.org/bot<token>/setWebhook?url=<cloud_function_url>",
+    "getFilePath_url": "https://api.telegram.org/bot<token>/getFile?file_id=<file_id>",
+    "getFile_url": "https://api.telegram.org/file/bot<token>/<file_path>",
+    "bq_project": {
+        "dataset_id": "<dataset_id>",
+        "table_id_patterns": {
+            "<table_id>": "<table_id>_"
+        }
+    }
+}
