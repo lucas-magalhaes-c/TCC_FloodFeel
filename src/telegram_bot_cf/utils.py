@@ -281,7 +281,7 @@ from firebase_admin import firestore
 
 class FirestoreHandler():
     def __init__(self):
-        service_account_path = 'service_account.json'
+        service_account_path = 'service_account_local.json' if "-local" in sys.argv else 'service_account.json'
 
         # open and load service account & project id
         sa_file = open(service_account_path)
@@ -299,7 +299,7 @@ class FirestoreHandler():
         else:
             # Testing locally
             # Use a service account
-            cred = credentials.Certificate('service_account.json')
+            cred = credentials.Certificate(service_account_path)
             firebase_admin.initialize_app(cred)
 
             self.db = firestore.client()

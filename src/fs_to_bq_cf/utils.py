@@ -15,7 +15,7 @@ class BigQueryHandler():
         self.dataset_id =  self.bq_project["dataset_id"]
         self.table_id_patterns = self.bq_project["table_id_patterns"]
 
-        service_account_path = 'service_account.json'
+        service_account_path = 'service_account_local.json' if "-local" in sys.argv else 'service_account.json'
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = service_account_path
 
         # open and load service account & project id
@@ -92,7 +92,7 @@ from firebase_admin import firestore
 
 class FirestoreHandler():
     def __init__(self):
-        service_account_path = 'service_account.json'
+        service_account_path = 'service_account_local.json' if "-local" in sys.argv else 'service_account.json'
 
         # open and load service account & project id
         sa_file = open(service_account_path)
@@ -110,7 +110,7 @@ class FirestoreHandler():
         else:
             # Testing locally
             # Use a service account
-            cred = credentials.Certificate('service_account.json')
+            cred = credentials.Certificate(service_account_path)
             firebase_admin.initialize_app(cred)
 
             self.db = firestore.client()
