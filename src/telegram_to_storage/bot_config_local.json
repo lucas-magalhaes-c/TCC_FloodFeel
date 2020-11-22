@@ -1,8 +1,0 @@
-{
-    "bot_name": "EnchentesBot",
-    "bot_id": 1072890358,
-    "telegram_bot_address": "t.me/FloodFeelBot",
-    "bot_token": "1072890358:AAFnAqrKyN8gp2zV7rFi6tYxHDw3X3m1KaE",
-    "getFilePath_url": "https://api.telegram.org/bot<token>/getFile?file_id=<file_id>",
-    "getFile_url": "https://api.telegram.org/file/bot<token>/<file_path>"
-}
