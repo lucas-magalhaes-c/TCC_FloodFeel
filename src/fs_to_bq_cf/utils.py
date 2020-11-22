@@ -61,7 +61,18 @@ class BigQueryHandler():
 
         try:
             status = self.client.insert_rows_json(table=table_full_path, json_rows=data) # Make an API request.
-            return True
+            if len(status) == 0:
+                return True
+            else:
+                try:
+                    print("One or more errors happened")
+                    for item in status:
+                        errors = item["errors"]
+                        for error in errors:
+                            print(f'Reason: {error["reason"]}, issue: {error["message"]}')
+                except:
+                    print("Failed in showing all the errors")
+                return False
         except Exception as e:
             print("Failed to insert data into BigQuery\n",e)
             return False
@@ -72,18 +83,15 @@ class BigQueryHandler():
                 bigquery.SchemaField("location_date", "DATE", mode="REQUIRED"),
                 bigquery.SchemaField("user_id_hash", "STRING", mode="REQUIRED"),
                 bigquery.SchemaField("location_timestamp_ms", "INTEGER", mode="REQUIRED"),
-                bigquery.SchemaField("latitude", "FLOAT", mode="REQUIRED"),
-                bigquery.SchemaField("longitude", "FLOAT", mode="REQUIRED"),
+                bigquery.SchemaField("lat_long", "STRING", mode="REQUIRED"),
                 bigquery.SchemaField("photo_date", "DATE", mode="REQUIRED"),
                 bigquery.SchemaField("photo_timestamp_ms", "INTEGER", mode="REQUIRED"),
-                bigquery.SchemaField("file_id", "STRING", mode="REQUIRED"),
-                bigquery.SchemaField("file_unique_id", "STRING", mode="REQUIRED")
+                bigquery.SchemaField("is_flood", "BOOLEAN", mode="REQUIRED")
             ]
         else:
             print("Schema not found for the table type")
             None
     
-
 
 
 import firebase_admin
@@ -92,6 +100,14 @@ from firebase_admin import firestore
 
 class FirestoreHandler():
     def __init__(self):
+        
+        # firestore document state (fs_state)
+        self.fs_state = {
+            1: "Waiting for flood prediction",
+            2: "Flood prediction check, waiting to send to BQ",
+            3: "Flood prediction check, sent to BQ"
+        }
+
         service_account_path = 'service_account_local.json' if "-local" in sys.argv else 'service_account.json'
 
         # open and load service account & project id
@@ -116,40 +132,32 @@ class FirestoreHandler():
             self.db = firestore.client()
     
     def add_document_to_collection(self,collection,data,data_type):
-        fs_state = {
-            1: "Waiting for ML check",
-            2: "ML check, waiting to send to BQ",
-            3: "ML check, sent to BQ"
-        }
 
         doc_ref = self.db.collection(collection).document(data["user_id_hash"])
 
-        if data_type == "photo":
-            doc_ref.set({
-                'photo_date': data["date"],
-                'user_id_hash': data["user_id_hash"],
-                'photo_timestamp_ms': data["timestamp_ms"],
-                'file_id': data["file_id"],
-                'file_unique_id': data["file_unique_id"],
-                'fs_state': 1
-            },merge=True)
-        elif data_type == "location":
-            doc_ref.set({
-                'location_date': data["date"],
-                'user_id_hash': data["user_id_hash"],
-                'location_timestamp_ms': data["timestamp_ms"],
-                'latitude': data["latitude"],
-                'longitude': data["longitude"],
-            },merge=True)
-        else:
-            print(f"data_type not recognized {data_type}")
+        try:
+            if data_type == "photo":
+                doc_ref.set({
+                    'photo_date': data["date"],
+                    'user_id_hash': data["user_id_hash"],
+                    'photo_timestamp_ms': data["timestamp_ms"],
+                    'file_id': data["file_id"],
+                    'file_unique_id': data["file_unique_id"],
+                    'fs_state': 1
+                },merge=True)
+            elif data_type == "location":
+                doc_ref.set({
+                    'location_date': data["date"],
+                    'user_id_hash': data["user_id_hash"],
+                    'location_timestamp_ms': data["timestamp_ms"],
+                    'lat_long': str(data["latitude"])+","+str(data["longitude"]),
+                },merge=True)
+            else:
+                print(f"data_type not recognized {data_type}")
+        except:
+            print("Missing field for the document. Data:",data)
     
     def get_documents(self,collection):
-        fs_state = {
-            1: "Waiting for ML check",
-            2: "ML check, waiting to send to BQ",
-            3: "ML check, sent to BQ"
-        }
         
         # Create a reference to the bot data
         bot_data_ref = self.db.collection(collection)
@@ -169,11 +177,6 @@ class FirestoreHandler():
         return docs
     
     def set_sent_to_bq_fs_state(self, collection, doc_ids):
-        fs_state = {
-            1: "Waiting for ML check",
-            2: "ML check, waiting to send to BQ",
-            3: "ML check, sent to BQ"
-        }
 
         for doc_id in doc_ids:
             doc_ref = self.db.collection(collection).document(doc_id)
@@ -181,4 +184,11 @@ class FirestoreHandler():
             doc_ref.set({
                 'fs_state': 3
             },merge=True)
+    
+    def delete_documents(self, collection, doc_ids):
+
+        for doc_id in doc_ids:
+            doc_ref = self.db.collection(collection).document(doc_id)
+
+            doc_ref.delete()
         
