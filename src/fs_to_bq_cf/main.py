@@ -9,11 +9,7 @@ date = datetime.today().strftime('%Y-%m-%d')
 def main (request):
     config = None
 
-    if "-local" in sys.argv:
-        config = json.loads(open("bot_config_local.json").read())
-    else:
-        # Get bot config data
-        config = json.loads(open("bot_config.json").read())
+    config = json.loads(open("bot_config_local.json").read()) if "-local" in sys.argv else json.loads(open("bot_config.json").read())
 
     FH = FirestoreHandler()
     docs = FH.get_documents(
@@ -40,15 +36,14 @@ def main (request):
             "location_date": doc_dict["location_date"],
             "user_id_hash": doc_dict["user_id_hash"],
             "location_timestamp_ms": doc_dict["location_timestamp_ms"],
-            "latitude": doc_dict["latitude"],
-            "longitude": doc_dict["longitude"],
+            "lat_long": doc_dict["lat_long"],
             "photo_date": doc_dict["photo_date"],
             "photo_timestamp_ms": doc_dict["photo_timestamp_ms"],
-            "file_id": doc_dict["file_id"],
-            "file_unique_id": doc_dict["file_unique_id"]
+            "is_flood": doc_dict["is_flood"]
         })
 
-    if data_separated_by_date == []:
+    # Checks if it's empty
+    if not bool(data_separated_by_date):
         print("No data to upload into bq")
         return
 
@@ -59,7 +54,8 @@ def main (request):
 
         if success == True:
             # Update fs_state to sent to bq for all docs
-            FH.set_sent_to_bq_fs_state(collection='bot_data', doc_ids=doc_ids_separated_by_date[date])
+            # FH.set_sent_to_bq_fs_state(collection='bot_data', doc_ids=doc_ids_separated_by_date[date])
+            FH.delete_documents(collection='bot_data', doc_ids=doc_ids_separated_by_date[date])
             print(f"Done. Data from date {date} was sent to Big Query")
         else:
             print(f"Failed. Data from date {date} wasn't sent to Big Query")
