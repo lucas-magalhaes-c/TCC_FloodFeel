@@ -281,6 +281,13 @@ from firebase_admin import firestore
 
 class FirestoreHandler():
     def __init__(self):
+        # firestore document state (fs_state)
+        self.fs_state = {
+            1: "Waiting for flood prediction",
+            2: "Flood prediction check, waiting to send to BQ",
+            3: "Flood prediction check, sent to BQ"
+        }
+
         service_account_path = 'service_account_local.json' if "-local" in sys.argv else 'service_account.json'
 
         # open and load service account & project id
@@ -305,11 +312,6 @@ class FirestoreHandler():
             self.db = firestore.client()
     
     def add_document_to_collection(self,collection,data,data_type):
-        fs_state = {
-            1: "Waiting for ML check",
-            2: "ML check, waiting to send to BQ",
-            3: "ML check, sent to BQ"
-        }
 
         doc_ref = self.db.collection(collection).document(data["user_id_hash"])
 
@@ -327,18 +329,12 @@ class FirestoreHandler():
                 'location_date': data["date"],
                 'user_id_hash': data["user_id_hash"],
                 'location_timestamp_ms': data["timestamp_ms"],
-                'latitude': data["latitude"],
-                'longitude': data["longitude"],
+                'lat_long': str(data["latitude"])+","+str(data["longitude"]),
             },merge=True)
         else:
             print(f"data_type not recognized {data_type}")
     
     def get_documents(self,collection):
-        fs_state = {
-            1: "Waiting for ML check",
-            2: "ML check, waiting to send to BQ",
-            3: "ML check, sent to BQ"
-        }
         
         # Create a reference to the bot data
         bot_data_ref = self.db.collection(collection)
@@ -358,11 +354,6 @@ class FirestoreHandler():
         return docs
     
     def set_sent_to_bq_fs_state(self, collection, doc_ids):
-        fs_state = {
-            1: "Waiting for ML check",
-            2: "ML check, waiting to send to BQ",
-            3: "ML check, sent to BQ"
-        }
 
         for doc_id in doc_ids:
             doc_ref = self.db.collection(collection).document(doc_id)
@@ -370,4 +361,12 @@ class FirestoreHandler():
             doc_ref.set({
                 'fs_state': 3
             },merge=True)
+    
+    def delete_documents(self, collection, doc_ids):
+
+        for doc_id in doc_ids:
+            doc_ref = self.db.collection(collection).document(doc_id)
+
+            doc_ref.delete()
+        
         
