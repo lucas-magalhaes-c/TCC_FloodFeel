@@ -3,6 +3,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton,
 import os
 import sys
 import json
+import io
+
 
 class FloodFeel_Keyboards():
 
@@ -11,6 +13,7 @@ class FloodFeel_Keyboards():
         self.message_text = None
         self.has_location = False
         self.is_photo = False
+        self.photo_to_send = None
 
         if message != None and "location" in message:
             self.has_location = True
@@ -43,6 +46,31 @@ class FloodFeel_Keyboards():
         ])
 
     def _start_opt_1(self):
+
+        self.text = "Escolha uma região de São Paulo para consultar"
+        self.keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton(text="Centro", callback_data='start_opt_1_1-SPCE')],
+            [InlineKeyboardButton(text="Zona Norte", callback_data='start_opt_1_1-SPZN')],
+            [InlineKeyboardButton(text="Zona Sul", callback_data='start_opt_1_1-SPZS')],
+            [InlineKeyboardButton(text="Zona Leste", callback_data='start_opt_1_1-SPZL')],
+            [InlineKeyboardButton(text="Zona Oeste", callback_data='start_opt_1_1-SPZO')],
+            [InlineKeyboardButton(text="Todas as regiões", callback_data='start_opt_1_1-SP')],
+            [InlineKeyboardButton(text="Voltar ao inicio", callback_data='start_short')]
+        ])
+
+    def _start_opt_1_1(self):
+        zone_id = self.callback_data.split("-")[1] # gets the zone part of start_opt_1_1-<zone>
+
+        config = json.loads(open("bot_config_local.json").read()) if "-local" in sys.argv else json.loads(open("bot_config.json").read())
+
+        SH = StorageHandler(config["storage_bucket_name"])
+        image = SH.get_image(f"sao_paulo/{config['maps_zone_ids'][zone_id]}.jpg")
+        
+        # with open(f'download_test.jpg', 'wb') as f:
+        #     f.write(image)
+
+        self.photo_to_send = io.BytesIO(image)
+
         self.text = "Olhe o estado atual das enchentes em São Paulo. Se possível, evite passar pelas regiões afetadas, para sua segurança :)"
         self.keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(text="Voltar ao inicio", callback_data='start_short')],
@@ -92,6 +120,7 @@ class FloodFeel_Keyboards():
             "start_long": self._start_long,
             "start_short": self._start_short,
             "start_opt_1": self._start_opt_1,
+            "start_opt_1_1": self._start_opt_1_1,
             "start_opt_2": self._start_opt_2,
             "start_opt_2_1": self._start_opt_2_1,
             "start_opt_2_1_1": self._start_opt_2_1_1,
@@ -103,8 +132,11 @@ class FloodFeel_Keyboards():
         }
 
         if self.callback_data != None:
-            # Get the function from switcher dictionary
-            chosen_keyboard_func = switcher.get(self.callback_data, lambda: "Invalid callback data")
+            if "start_opt_1_1" in self.callback_data:
+                chosen_keyboard_func = switcher["start_opt_1_1"]
+            else:
+                # Get the function from switcher dictionary
+                chosen_keyboard_func = switcher.get(self.callback_data, lambda: "Invalid callback data")
         elif self.message_text == "/start":
             chosen_keyboard_func = switcher.get("start_long", lambda: "Invalid keyboard function 1")
         elif self.has_location == True:
@@ -119,11 +151,11 @@ class FloodFeel_Keyboards():
             chosen_keyboard_func()
 
             try:
-                return self.text, self.keyboard
+                return self.text, self.keyboard, self.photo_to_send
             except:
                 print("Failed on getting keyboard. ")
                 self._failed()
-                return self.text, self.keyboard
+                return self.text, self.keyboard, self.photo_to_send
         
         else:
             print("Failed on getting keyboard, method is None")
@@ -370,3 +402,46 @@ class FirestoreHandler():
             doc_ref.delete()
         
         
+from google.cloud import storage
+
+class StorageHandler():
+
+    def __init__(self, bucket_name):
+        service_account_path = 'service_account_local.json' if "-local" in sys.argv else 'service_account.json'
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = service_account_path
+        
+        # Instantiates a storage client
+        self.storage_client = storage.Client()
+
+        try:
+            self.bucket = self.storage_client.get_bucket(bucket_name)
+        except:
+            print("Bucket not found. Try grant access to storage bucket for the service account")
+            raise Exception("Bucket not found") 
+    
+    def get_image(self,file_path,type="jpg"):
+        try:
+            blob = self.bucket.get_blob(file_path)
+        except:
+            print("Blob not found. Verify bucket folder and filename")
+            raise Exception("Blob not found") 
+
+        downloaded_blob = blob.download_as_string()
+
+        return downloaded_blob
+        # query = downloaded_blob.decode("utf-8") 
+    
+    def upload_image(self,image_data,storage_file_path,img_type="jpg"):
+
+        if img_type == "jpg":
+            try:
+                # Name of the object to be stored in the bucket
+                blob = self.bucket.blob(storage_file_path+'.jpg')
+
+                # Uploading string of text
+                blob.upload_from_string(image_data)
+            except Exception as e:
+                print("Failed on image upload to Storage. Error:\n",e)
+        else:
+            print(f"Image type not recognized: {img_type}. File was not uploaded") 
+        return
