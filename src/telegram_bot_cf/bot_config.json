@@ -6,5 +6,10 @@
     "hash_salt": "<custom salt>",
     "setTelegramWebhook_url": "https://api.telegram.org/bot<token>/setWebhook?url=<cloud_function_url>",
     "getFilePath_url": "https://api.telegram.org/bot<token>/getFile?file_id=<file_id>",
-    "getFile_url": "https://api.telegram.org/file/bot<token>/<file_path>"
+    "getFile_url": "https://api.telegram.org/file/bot<token>/<file_path>",
+    "storage_bucket_name": "<bucket_name>",
+    "maps_zone_ids": {
+        "<region_id1>": "<storage_filename1",
+        "<region_id2>": "<storage_filename2"
+    }
 }
