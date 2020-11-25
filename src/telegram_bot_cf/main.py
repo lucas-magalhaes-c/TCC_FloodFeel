@@ -1,7 +1,3 @@
-
-# API
-# https://core.telegram.org/bots/api
-
 from utils import FloodFeel_Keyboards, hashText, FirestoreHandler, MessageHandle
 from telegram import Bot
 import requests
@@ -55,14 +51,25 @@ def run_bot(request_json):
 
     # Initializes the bot with the token and get the keyboard
     bot = Bot(token=config["bot_token"]) 
-    text, reply_markup = MH.get_reply_keyboard()
+    text, reply_markup, photo = MH.get_reply_keyboard()
     
-    # Send message to user
-    bot.send_message(
-        chat_id=MH.get_user_id(),
-        text=text,
-        reply_markup=reply_markup
-    )
+    if photo is not None:
+        bot.send_message(
+            chat_id=MH.get_user_id(),
+            text=text,
+        )
+        bot.send_photo(
+            chat_id=MH.get_user_id(),
+            photo=photo,
+            reply_markup=reply_markup
+        )
+    else:
+        # Send message to user
+        bot.send_message(
+            chat_id=MH.get_user_id(),
+            text=text,
+            reply_markup=reply_markup
+        )
 
     if local:
         MH.infos()
