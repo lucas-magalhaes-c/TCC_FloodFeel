@@ -118,19 +118,18 @@ class FirestoreHandler():
 
         if "-local" not in sys.argv:
             # Use the application default credentials, in GCP
-            cred = credentials.ApplicationDefault()
-            firebase_admin.initialize_app(cred, {
-            'projectId': project_id,
-            })
+            if (not len(firebase_admin._apps)):
+                cred = credentials.ApplicationDefault()
+                firebase_admin.initialize_app(cred, {
+                    'projectId': project_id})
 
-            self.db = firestore.client()
         else:
             # Testing locally
             # Use a service account
             cred = credentials.Certificate(service_account_path)
             firebase_admin.initialize_app(cred)
 
-            self.db = firestore.client()
+        self.db = firestore.client()
     
     def add_document_to_collection(self,collection,data,data_type):
 
@@ -145,6 +144,7 @@ class FirestoreHandler():
                     'file_id': data["file_id"],
                     'file_unique_id': data["file_unique_id"]
                 },merge=True)
+                print("Photo data sent to fs")
             elif data_type == "location":
                 doc_ref.set({
                     'location_date': data["date"],
@@ -152,16 +152,18 @@ class FirestoreHandler():
                     'location_timestamp_ms': data["timestamp_ms"],
                     'lat_long': str(data["latitude"])+","+str(data["longitude"]),
                 },merge=True)
+                print("Location data sent to fs")
             elif data_type == "water_level":
                 doc_ref.set({
                     'water_level': data["water_level"],
                     'water_level_case': data["water_level_case"],
                     'fs_state': 1
                 },merge=True)
+                print("Water level data sent to fs")
             else:
                 print(f"data_type not recognized {data_type}")
         except:
-            print("Missing field for the document. Data:",data)
+            print("Failed to send data. Data:",data)
     
     def get_documents(self,collection):
         

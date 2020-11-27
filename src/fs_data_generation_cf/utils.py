@@ -78,19 +78,18 @@ class FirestoreHandler():
 
         if "-local" not in sys.argv:
             # Use the application default credentials, in GCP
-            cred = credentials.ApplicationDefault()
-            firebase_admin.initialize_app(cred, {
-            'projectId': project_id,
-            })
+            if (not len(firebase_admin._apps)):
+                cred = credentials.ApplicationDefault()
+                firebase_admin.initialize_app(cred, {
+                    'projectId': project_id})
 
-            self.db = firestore.client()
         else:
             # Testing locally
             # Use a service account
             cred = credentials.Certificate(service_account_path)
             firebase_admin.initialize_app(cred)
 
-            self.db = firestore.client()
+        self.db = firestore.client()
     
     def add_document_to_collection(self,collection,data,data_type):
 
