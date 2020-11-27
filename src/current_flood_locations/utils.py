@@ -26,7 +26,8 @@ class StorageHandler():
             raise Exception("Blob not found") 
 
         downloaded_blob = blob.download_as_string()
-        query = downloaded_blob.decode("utf-8") 
+        # query = downloaded_blob.decode("utf-8") 
+        return downloaded_blob
     
     def upload_image(self,image_data,storage_file_path,img_type="jpg"):
 
@@ -79,9 +80,19 @@ class BigQueryHandler():
     def get_latlong(self,table_date):
         dateYYYYMMDD = table_date.replace("-","")
 
+        table_full_path = self.project_id+"."+self.dataset_id+"."+self.table_id_patterns["bot_data_fs"] + dateYYYYMMDD
+
+        # Check if table exists
+        try:
+            table_exists = self.client.get_table(table_full_path)
+        except:
+            # Table doesnt exist, lets create it
+            print("No flood detected at São Paulo")
+            return []
+
         query = f"""
             SELECT lat_long
-            FROM `{self.project_id}.{self.dataset_id}.{self.table_id_patterns["bot_data_fs"]}{dateYYYYMMDD}`
+            FROM `{table_full_path}`
             WHERE is_flood = True
             GROUP BY lat_long
         """
