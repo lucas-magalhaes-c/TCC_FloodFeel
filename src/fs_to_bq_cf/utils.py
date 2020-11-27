@@ -7,7 +7,6 @@ from datetime import datetime
 from google.cloud import bigquery
 import google.auth
 
-# https://cloud.google.com/bigquery/docs/loading-data-local
 
 class BigQueryHandler():
     def __init__(self, config):
@@ -139,13 +138,13 @@ class FirestoreHandler():
 
         try:
             if data_type == "photo":
-            doc_ref.set({
-                'photo_date': data["date"],
-                'user_id_hash': data["user_id_hash"],
-                'photo_timestamp_ms': data["timestamp_ms"],
-                'file_id': data["file_id"],
-                'file_unique_id': data["file_unique_id"]
-            },merge=True)
+                doc_ref.set({
+                    'photo_date': data["date"],
+                    'user_id_hash': data["user_id_hash"],
+                    'photo_timestamp_ms': data["timestamp_ms"],
+                    'file_id': data["file_id"],
+                    'file_unique_id': data["file_unique_id"]
+                },merge=True)
             elif data_type == "location":
                 doc_ref.set({
                     'location_date': data["date"],
