@@ -71,7 +71,7 @@ class FloodFeel_Keyboards():
 
         self.photo_to_send = io.BytesIO(image)
 
-        self.text = "Olhe o estado atual das enchentes em São Paulo. Se possível, evite passar pelas regiões afetadas, para sua segurança :)"
+        self.text = f"Olhe o estado atual das enchentes nessa região. Se possível, evite passar pelas regiões afetadas, para sua segurança :)"
         self.keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(text="Voltar ao inicio", callback_data='start_short')],
         ])
@@ -98,7 +98,23 @@ class FloodFeel_Keyboards():
         ])
     
     def _start_opt_2_1_1_1(self):
-        self.text = "Foto recebida, muito obrigado por contribuir! \n\nJuntos somos mais fortes para atenuar os efeitos das enchentes 😊"
+        self.text = "Foto recebida! Conseguiria nos indicar a gravidade da enchente informando o nível da água conforme indicado na imagem?"
+
+        config = json.loads(open("bot_config_local.json").read()) if "-local" in sys.argv else json.loads(open("bot_config.json").read())
+        SH = StorageHandler(config["storage_bucket_name"])
+        image = SH.get_image("gravidade/gravidade_EnchentesBot.jpg")
+
+        self.photo_to_send = io.BytesIO(image)
+        self.keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton(text="1- Água abaixo da linha verde", callback_data='start_opt_2_1_1_1_1-1')],
+            [InlineKeyboardButton(text="2- Entre as linhas verde e amarela", callback_data='start_opt_2_1_1_1_1-2')],
+            [InlineKeyboardButton(text="3- Entre as linhas amarela e vermelha", callback_data='start_opt_2_1_1_1_1-3')],
+            [InlineKeyboardButton(text="4- Acima da linha vermelha", callback_data='start_opt_2_1_1_1_1-4')],
+            [InlineKeyboardButton(text="Não sei informar", callback_data='start_opt_2_1_1_1_1-0')]
+        ])
+    
+    def _start_opt_2_1_1_1_1(self):
+        self.text = "Muito obrigado por contribuir! \n\nJuntos somos mais fortes para atenuar os efeitos das enchentes 😊"
         self.keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(text="Voltar ao inicio", callback_data='start_short')]
         ])
@@ -125,6 +141,7 @@ class FloodFeel_Keyboards():
             "start_opt_2_1": self._start_opt_2_1,
             "start_opt_2_1_1": self._start_opt_2_1_1,
             "start_opt_2_1_1_1": self._start_opt_2_1_1_1,
+            "start_opt_2_1_1_1_1": self._start_opt_2_1_1_1_1,
             "start_opt_2_2": self._start_opt_2_2,
             "start_opt_3": None,
             "start_opt_4": None,
@@ -134,6 +151,8 @@ class FloodFeel_Keyboards():
         if self.callback_data != None:
             if "start_opt_1_1" in self.callback_data:
                 chosen_keyboard_func = switcher["start_opt_1_1"]
+            elif "start_opt_2_1_1_1_1" in self.callback_data:
+                chosen_keyboard_func = switcher["start_opt_2_1_1_1_1"]
             else:
                 # Get the function from switcher dictionary
                 chosen_keyboard_func = switcher.get(self.callback_data, lambda: "Invalid callback data")
@@ -191,6 +210,8 @@ class MessageHandle():
         self.data_to_store = {}
         self.data_type = None
         self.hash_salt = config["hash_salt"]
+        self.water_level = None
+        self.water_level_case = None
 
         try:
             request_json["callback_query"]
@@ -208,7 +229,7 @@ class MessageHandle():
         self._validate()
 
         # configure data to be inserted on Big Query
-        if self.location != None or self.photo_data != None:
+        if self.location != None or self.photo_data != None or self.water_level != None:
             self._configure_data_to_store()
 
     def get_reply_keyboard(self):
@@ -224,9 +245,18 @@ class MessageHandle():
             
             try:
                 self.callback_data = request_json["callback_query"]["data"]
+
+                # water level info
+                if "start_opt_2_1_1_1_1" in self.callback_data:
+                    
+                    self.water_level = int(self.callback_data.split("-")[1])
+                    if self.water_level == 0:
+                        self.water_level_case = "Não soube informar"
+                    else:
+                        self.water_level_case = f"Nível {str(self.water_level)}"
             except:
                 self.callback_data = None
-                print("Fail to configure requested callback")
+                print("Failed to configure requested callback")
         else: 
             message = request_json["message"]
             self.message = message
@@ -281,19 +311,23 @@ class MessageHandle():
         return self.chat["first_name"]
 
     def _configure_data_to_store(self):
-        
-        self.data_to_store["date"] = date
         self.data_to_store["user_id_hash"] = hashText(text=str(self.get_user_id()), salt=self.hash_salt)
-        self.data_to_store["timestamp_ms"] = timestamp_ms
 
         if self.location != None:
-            # table to send the data
+            self.data_to_store["date"] = date
+            self.data_to_store["timestamp_ms"] = timestamp_ms
+
+            # type of data to be uploaded
             self.data_type = "location"
 
             self.data_to_store["latitude"] = self.location["latitude"]
             self.data_to_store["longitude"] = self.location["longitude"]
+
         elif self.photo_data != None:
-            # table to send the data
+            self.data_to_store["date"] = date
+            self.data_to_store["timestamp_ms"] = timestamp_ms
+
+            # type of data to be uploaded
             self.data_type = "photo"
 
             # pick the best quality photo in the list (the last element is the best)
@@ -301,6 +335,15 @@ class MessageHandle():
 
             self.data_to_store["file_id"] = best_photo["file_id"]
             self.data_to_store["file_unique_id"] = best_photo["file_unique_id"]
+
+        elif self.water_level != None:
+
+            # type of data to be uploaded
+            self.data_type = "water_level"
+
+            self.data_to_store["water_level"] = self.water_level
+            self.data_to_store["water_level_case"] = self.water_level_case
+
     
     def infos(self):
         print(" **** INFOS ****\nchat_id:",self.chat["id"],"\nfirst_name:",self.chat["first_name"],"\nis_callback:",
@@ -353,8 +396,7 @@ class FirestoreHandler():
                 'user_id_hash': data["user_id_hash"],
                 'photo_timestamp_ms': data["timestamp_ms"],
                 'file_id': data["file_id"],
-                'file_unique_id': data["file_unique_id"],
-                'fs_state': 1
+                'file_unique_id': data["file_unique_id"]
             },merge=True)
         elif data_type == "location":
             doc_ref.set({
@@ -362,6 +404,12 @@ class FirestoreHandler():
                 'user_id_hash': data["user_id_hash"],
                 'location_timestamp_ms': data["timestamp_ms"],
                 'lat_long': str(data["latitude"])+","+str(data["longitude"]),
+            },merge=True)
+        elif data_type == "water_level":
+            doc_ref.set({
+                'water_level': data["water_level"],
+                'water_level_case': data["water_level_case"],
+                'fs_state': 1
             },merge=True)
         else:
             print(f"data_type not recognized {data_type}")
