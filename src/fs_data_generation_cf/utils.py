@@ -7,7 +7,7 @@ import numpy as np
 from datetime import datetime
 import google.auth
 
-def data_generator(start_time, end_time, lat_long_list, number_per_lat_long=10):
+def data_generator(start_time, end_time, lat_long_list, water_level_info, number_per_lat_long=10):
     # 300000 ms is 5 minutes, 60000 ms is 1 minute
     data_generated = []
 
@@ -21,10 +21,7 @@ def data_generator(start_time, end_time, lat_long_list, number_per_lat_long=10):
 
     end_timestamp_ms = end_time.timestamp() * 1000
     start_timestamp_ms = start_time.timestamp() * 1000
-    date = start_time.strftime('%Y-%m-%d')
 
-    user_id_hash = 1
-    
     for lat_long in lat_long_list:
         n = 0
         number_per_lat_long_custom = number_per_lat_long + np.random.randint(-int(number_per_lat_long*0.5), int(number_per_lat_long*0.5)+1)
@@ -36,18 +33,22 @@ def data_generator(start_time, end_time, lat_long_list, number_per_lat_long=10):
 
             data = {}
 
+            splited = lat_long.split(",")
+            custom_lat_long = str(round(float(splited[0])+np.random.randint(-500,501)/1000000,6))+","+str(round(float(splited[1])+np.random.randint(-500,501)/1000000,6))
+
             data["file_id"] = "1"
             data["file_unique_id"] = "1"
-            data["location_date"] = date
+            data["location_date"] = datetime.fromtimestamp(location_timestamp_ms/1000).strftime('%Y-%m-%d')
             data["location_timestamp_ms"] = location_timestamp_ms
-            data["lat_long"] = lat_long
-            data["photo_date"] = date
+            data["lat_long"] = custom_lat_long
+            data["photo_date"] = datetime.fromtimestamp(location_timestamp_ms/1000+30).strftime('%Y-%m-%d')
             data["photo_timestamp_ms"] = location_timestamp_ms + 30000 # 30 seconds
-            data["user_id_hash"] = str(user_id_hash)
+            data["user_id_hash"] = str(np.random.randint(0,3000000))
             data["is_flood"] = True
+            data["water_level"] = water_level_info["water_level"]
+            data["water_level_case"] = water_level_info["water_level_case"]
 
             data_generated.append(data)
-            user_id_hash = user_id_hash + 1
             n = n + 1
 
     return data_generated
@@ -123,12 +124,14 @@ class FirestoreHandler():
                     'location_date': data["location_date"],
                     'location_timestamp_ms': data["location_timestamp_ms"],
                     'lat_long': data['lat_long'],
-                    'is_flood': data['is_flood']
+                    'is_flood': data['is_flood'],
+                    'water_level': data['water_level'],
+                    'water_level_case': data['water_level_case'],
                 },merge=True)
             else:
                 print(f"data_type not recognized {data_type}")
         except:
-            print("Missing field for the document. Data:",data)
+            print("Failed to upload. Data:",data)
     
     def get_documents(self,collection):
         
