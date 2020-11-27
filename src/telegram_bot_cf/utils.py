@@ -71,7 +71,7 @@ class FloodFeel_Keyboards():
 
         self.photo_to_send = io.BytesIO(image)
 
-        self.text = f"Olhe o estado atual das enchentes nessa região. Se possível, evite passar pelas regiões afetadas, para sua segurança :)"
+        self.text = f"Olhe o estado atual das enchentes nessa região. Se possível evite passar pelos locais afetados, para sua segurança 😃"
         self.keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(text="Voltar ao inicio", callback_data='start_short')],
         ])
@@ -98,7 +98,7 @@ class FloodFeel_Keyboards():
         ])
     
     def _start_opt_2_1_1_1(self):
-        self.text = "Foto recebida! Conseguiria nos indicar a gravidade da enchente informando o nível da água conforme indicado na imagem?"
+        self.text = "Foto recebida! Consegue indicar a gravidade da enchente informando o nível da água conforme na imagem?"
 
         config = json.loads(open("bot_config_local.json").read()) if "-local" in sys.argv else json.loads(open("bot_config.json").read())
         SH = StorageHandler(config["storage_bucket_name"])
@@ -313,7 +313,15 @@ class MessageHandle():
     def _configure_data_to_store(self):
         self.data_to_store["user_id_hash"] = hashText(text=str(self.get_user_id()), salt=self.hash_salt)
 
-        if self.location != None:
+        if self.water_level != None:
+
+            # type of data to be uploaded
+            self.data_type = "water_level"
+
+            self.data_to_store["water_level"] = self.water_level
+            self.data_to_store["water_level_case"] = self.water_level_case
+
+        elif self.location != None:
             self.data_to_store["date"] = date
             self.data_to_store["timestamp_ms"] = timestamp_ms
 
@@ -336,18 +344,13 @@ class MessageHandle():
             self.data_to_store["file_id"] = best_photo["file_id"]
             self.data_to_store["file_unique_id"] = best_photo["file_unique_id"]
 
-        elif self.water_level != None:
-
-            # type of data to be uploaded
-            self.data_type = "water_level"
-
-            self.data_to_store["water_level"] = self.water_level
-            self.data_to_store["water_level_case"] = self.water_level_case
-
-    
+        
     def infos(self):
         print(" **** INFOS ****\nchat_id:",self.chat["id"],"\nfirst_name:",self.chat["first_name"],"\nis_callback:",
         self.callback_data != None,"\nis_location:",self.location != None,"\nis_photo:",self.photo_data != None)
+    
+    def infos_cloud(self):
+        print(f"**** INFOS ****\ndata_type: {self.data_type}, is_callback: {self.callback_data != None}, is_location: {self.location != None}, is_photo: {self.photo_data != None}, is_water_level: {self.water_level != None}")
 
     
 import firebase_admin
@@ -372,47 +375,52 @@ class FirestoreHandler():
 
         if "-local" not in sys.argv:
             # Use the application default credentials, in GCP
-            cred = credentials.ApplicationDefault()
-            firebase_admin.initialize_app(cred, {
-            'projectId': project_id,
-            })
+            if (not len(firebase_admin._apps)):
+                cred = credentials.ApplicationDefault()
+                firebase_admin.initialize_app(cred, {
+                    'projectId': project_id})
 
-            self.db = firestore.client()
         else:
             # Testing locally
-            # Use a service account
             cred = credentials.Certificate(service_account_path)
             firebase_admin.initialize_app(cred)
+            
 
-            self.db = firestore.client()
+        self.db = firestore.client()
     
     def add_document_to_collection(self,collection,data,data_type):
 
         doc_ref = self.db.collection(collection).document(data["user_id_hash"])
 
-        if data_type == "photo":
-            doc_ref.set({
-                'photo_date': data["date"],
-                'user_id_hash': data["user_id_hash"],
-                'photo_timestamp_ms': data["timestamp_ms"],
-                'file_id': data["file_id"],
-                'file_unique_id': data["file_unique_id"]
-            },merge=True)
-        elif data_type == "location":
-            doc_ref.set({
-                'location_date': data["date"],
-                'user_id_hash': data["user_id_hash"],
-                'location_timestamp_ms': data["timestamp_ms"],
-                'lat_long': str(data["latitude"])+","+str(data["longitude"]),
-            },merge=True)
-        elif data_type == "water_level":
-            doc_ref.set({
-                'water_level': data["water_level"],
-                'water_level_case': data["water_level_case"],
-                'fs_state': 1
-            },merge=True)
-        else:
-            print(f"data_type not recognized {data_type}")
+        try:
+            if data_type == "photo":
+                doc_ref.set({
+                    'photo_date': data["date"],
+                    'user_id_hash': data["user_id_hash"],
+                    'photo_timestamp_ms': data["timestamp_ms"],
+                    'file_id': data["file_id"],
+                    'file_unique_id': data["file_unique_id"]
+                },merge=True)
+                print("Photo data sent to fs")
+            elif data_type == "location":
+                doc_ref.set({
+                    'location_date': data["date"],
+                    'user_id_hash': data["user_id_hash"],
+                    'location_timestamp_ms': data["timestamp_ms"],
+                    'lat_long': str(data["latitude"])+","+str(data["longitude"]),
+                },merge=True)
+                print("Location data sent to fs")
+            elif data_type == "water_level":
+                doc_ref.set({
+                    'water_level': data["water_level"],
+                    'water_level_case': data["water_level_case"],
+                    'fs_state': 1
+                },merge=True)
+                print("Water level data sent to fs")
+            else:
+                print(f"data_type not recognized {data_type}")
+        except:
+            print("Failed to send data. Data:",data)
     
     def get_documents(self,collection):
         

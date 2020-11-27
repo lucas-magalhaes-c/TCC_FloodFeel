@@ -18,7 +18,6 @@ def main(request):
             request_json = json.loads(open("../debug/payload.json").read())
     else:
         request_json = request.get_json()
-        print(request_json)
 
     # Ignore requests with no body
     if request_json is None:
@@ -40,9 +39,6 @@ def run_bot(request_json):
     if MH.is_valid == False:
         return
     
-    # insert data into BigQuery (also creates a new table if it doesnt exist yet)
-    # BQH = BigQueryHandler(config=config)
-    # BQH.insert_data(data=MH.data_to_bq,table_type=MH.data_type)
 
     # On existence, send to Firestore
     if MH.data_to_store != {}:
@@ -74,6 +70,8 @@ def run_bot(request_json):
     if local:
         MH.infos()
         print("> Message sent")
+    else: 
+        MH.infos_cloud()
     
 
 if local:
