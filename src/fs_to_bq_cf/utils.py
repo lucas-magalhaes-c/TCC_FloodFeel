@@ -86,7 +86,9 @@ class BigQueryHandler():
                 bigquery.SchemaField("lat_long", "STRING", mode="REQUIRED"),
                 bigquery.SchemaField("photo_date", "DATE", mode="REQUIRED"),
                 bigquery.SchemaField("photo_timestamp_ms", "INTEGER", mode="REQUIRED"),
-                bigquery.SchemaField("is_flood", "BOOLEAN", mode="REQUIRED")
+                bigquery.SchemaField("is_flood", "BOOLEAN", mode="REQUIRED"),
+                bigquery.SchemaField("water_level", "INTEGER", mode="REQUIRED"),
+                bigquery.SchemaField("water_level_case", "STRING", mode="REQUIRED")
             ]
         else:
             print("Schema not found for the table type")
@@ -137,20 +139,25 @@ class FirestoreHandler():
 
         try:
             if data_type == "photo":
-                doc_ref.set({
-                    'photo_date': data["date"],
-                    'user_id_hash': data["user_id_hash"],
-                    'photo_timestamp_ms': data["timestamp_ms"],
-                    'file_id': data["file_id"],
-                    'file_unique_id': data["file_unique_id"],
-                    'fs_state': 1
-                },merge=True)
+            doc_ref.set({
+                'photo_date': data["date"],
+                'user_id_hash': data["user_id_hash"],
+                'photo_timestamp_ms': data["timestamp_ms"],
+                'file_id': data["file_id"],
+                'file_unique_id': data["file_unique_id"]
+            },merge=True)
             elif data_type == "location":
                 doc_ref.set({
                     'location_date': data["date"],
                     'user_id_hash': data["user_id_hash"],
                     'location_timestamp_ms': data["timestamp_ms"],
                     'lat_long': str(data["latitude"])+","+str(data["longitude"]),
+                },merge=True)
+            elif data_type == "water_level":
+                doc_ref.set({
+                    'water_level': data["water_level"],
+                    'water_level_case': data["water_level_case"],
+                    'fs_state': 1
                 },merge=True)
             else:
                 print(f"data_type not recognized {data_type}")

@@ -39,7 +39,9 @@ def main (request):
             "lat_long": doc_dict["lat_long"],
             "photo_date": doc_dict["photo_date"],
             "photo_timestamp_ms": doc_dict["photo_timestamp_ms"],
-            "is_flood": doc_dict["is_flood"]
+            "is_flood": doc_dict["is_flood"],
+            "water_level": doc_dict["water_level"],
+            "water_level_case": doc_dict["water_level_case"]
         })
 
     # Checks if it's empty
