@@ -28,22 +28,30 @@ class FloodFeel_Keyboards():
             print("Failed to get callback data or message text")
     
     def _start_long(self):
+        config = json.loads(open("bot_config_local.json").read()) if "-local" in sys.argv else json.loads(open("bot_config.json").read())
+        
         self.text = "Olá, seja bem vindo(a) ao EnchentesBot! 🤖\nAqui você será informado(a) sobre os pontos de enchente na cidade de São Paulo e poderá contribuir informando novos locais de enchente.\n\nO que deseja fazer?"
         self.keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(text="Consultar enchentes em São Paulo", callback_data='start_opt_1')],
             [InlineKeyboardButton(text="Inserir novo foco de enchente", callback_data='start_opt_2')],
-            [InlineKeyboardButton(text="Cadastrar", callback_data='start_opt_3')],
-            [InlineKeyboardButton(text="Compartilhar", callback_data='start_opt_4')]
+            [InlineKeyboardButton(text="Acessar dashboard", url=config["dashboard_url"])]
         ])
+        # TODO: future functions
+        # [InlineKeyboardButton(text="Cadastrar", callback_data='start_opt_3')]
+        # [InlineKeyboardButton(text="Compartilhar", callback_data='start_opt_4')]
     
     def _start_short(self):
+        config = json.loads(open("bot_config_local.json").read()) if "-local" in sys.argv else json.loads(open("bot_config.json").read())
+
         self.text = "Olá! O que deseja fazer? Por favor escolha um dos botões abaixo"
         self.keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(text="Consultar enchentes em São Paulo", callback_data='start_opt_1')],
             [InlineKeyboardButton(text="Inserir novo foco de enchente", callback_data='start_opt_2')],
-            [InlineKeyboardButton(text="Cadastrar", callback_data='start_opt_3')],
-            [InlineKeyboardButton(text="Compartilhar", callback_data='start_opt_4')]
+            [InlineKeyboardButton(text="Acessar dashboard", url=config["dashboard_url"])]
         ])
+        # TODO: future functions
+        # [InlineKeyboardButton(text="Cadastrar", callback_data='start_opt_3')]
+        # [InlineKeyboardButton(text="Compartilhar", callback_data='start_opt_4')]
 
     def _start_opt_1(self):
 
@@ -373,18 +381,20 @@ class FirestoreHandler():
         sa_json = json.loads(sa_file.read())
         project_id = sa_json['project_id']
 
-        if "-local" not in sys.argv:
+        if "-local" in sys.argv:
+            # Testing locally
+            # Use a service account
+            cred = credentials.Certificate(service_account_path)
+            firebase_admin.initialize_app(cred)
+
+        else:
             # Use the application default credentials, in GCP
             if (not len(firebase_admin._apps)):
                 cred = credentials.ApplicationDefault()
-                firebase_admin.initialize_app(cred, {
-                    'projectId': project_id})
-
-        else:
-            # Testing locally
-            cred = credentials.Certificate(service_account_path)
-            firebase_admin.initialize_app(cred)
-            
+                firebase_admin.initialize_app(
+                    cred, 
+                    {'projectId': project_id}
+                )
 
         self.db = firestore.client()
     
