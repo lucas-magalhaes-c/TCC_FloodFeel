@@ -11,5 +11,6 @@
     "maps_zone_ids": {
         "<region_id1>": "<storage_filename1",
         "<region_id2>": "<storage_filename2"
-    }
+    },
+    "dashboard_url":"<dashboard_url"
 }
