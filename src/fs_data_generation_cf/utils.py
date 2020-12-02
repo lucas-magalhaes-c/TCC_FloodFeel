@@ -22,7 +22,15 @@ def data_generator(start_time, end_time, lat_long_list, water_level_info, number
     end_timestamp_ms = end_time.timestamp() * 1000
     start_timestamp_ms = start_time.timestamp() * 1000
 
+
     for lat_long in lat_long_list:
+
+        # flip coin, should insert?
+        coin = np.random.randint(0,2)
+        if coin == 0:
+            # skip
+            continue
+
         n = 0
         number_per_lat_long_custom = number_per_lat_long + np.random.randint(-int(number_per_lat_long*0.5), int(number_per_lat_long*0.5)+1)
         number_per_lat_long_custom = number_per_lat_long_custom if number_per_lat_long_custom > 0 else 1 # at least one
