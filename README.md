@@ -10,6 +10,7 @@ O sistema funciona com a colaboração da população com informações. O usuá
 
 A arquitetura foi projetada para funcionar de forma escalável na nuvem, conseguindo aumentar suas capacidades conforme o número de usuários aumenta, e de maneira que seja fácil adicionar novas funcionalidades, como a predição de enchentes e o envio de alertas para os usuários.
 
+<img src="docs/ArquiteturaTecnologias.jpg">
 
 # Setup do projeto na Google Cloud Platform (GCP)
 
