@@ -11,6 +11,12 @@ Após isso, é definida a resposta adequada a ser enviada para o usuário, com b
 
 O MessageHandler, o FirestoreHandler e o FloodFeel_Keyboard estão presentes no arquivo **utils.py**.
 
+## Modo de teste
+
+Para executar o modo de teste localmente basta utilizar a flag **-local**
+```py
+python3 main.py -local
+```
 ## Arquivo bot_config.json
 
 Os dados sensíveis da aplicação estão contidos nesse arquivo. O significado de cada campo será apresentado a seguir:
@@ -37,3 +43,13 @@ Esse arquivo representa as credenciais que a Cloud Function irá utilizar para a
 * Firebase Admin SDK Administrator Service Agent
 
 Essa *service account* poderá ser usada para os demais módulos enquanto os testes estiverem sendo feitos, porém recomenda-se utilizar uma service_account diferente para cada módulo, para garantir apenas as funções necessárias que cada módulo precisa para operar. Assim a implementação estará mais segura.
+
+## Arquivo requirements.txt
+
+Basicamente esse arquivo é necessário para indicar à Cloud Function todas as dependências que são necessárias para que ela funcione. No caso do Telegram Bot, as seguintes bibliotecas são utilizadas, juntamente com suas versões:
+* requests==2.24.0
+* python-telegram-bot==13.0
+* firebase-admin==4.4.0
+* google-cloud-bigquery==2.2.0
+* google-cloud-firestore==1.9.0
+* google-cloud-storage==1.32.0
