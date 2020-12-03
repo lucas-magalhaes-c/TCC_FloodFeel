@@ -13,11 +13,13 @@ def main(request):
     if local:
         if "-payload" in sys.argv:
             payload = sys.argv[sys.argv.index("-payload") + 1]
-            request_json = json.loads(open("../debug/payload_"+payload+".json").read())
+            request_json = json.loads(open("debug/payload_"+payload+".json").read())
         else:
-            request_json = json.loads(open("../debug/payload.json").read())
+            request_json = json.loads(open("debug/payload.json").read())
     else:
         request_json = request.get_json()
+        # Uncomment to print the request_json to receive data to put in debug payloads
+        # print(request_json)
 
     # Ignore requests with no body
     if request_json is None:
