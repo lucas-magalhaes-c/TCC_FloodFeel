@@ -3,6 +3,8 @@
 Este módulo é responsável por conter toda a lógica de operação do bot, para que funcione corretamente de forma serverless. 
 Assim como o restante do projeto, ele foi desenvolvido em Python, na versão 3.8.
 
+Caso não saiba instanciar uma Cloud Function, esse tutorial do Google pode ser seguido: [Cloud Functions Quickstart](https://cloud.google.com/functions/docs/quickstart)
+
 ## Funcionamento
 
 O arquivo principal é o main.py, que receberá o request. Nele é inciado o MessageHandle, objeto que extrai os conteúdos da mensagem, verifica se há dados para enviar para o Firestore e avalia se a mensagem é válida. Caso seja e existam dados para serem enviados para o Firestore, o objeto FirestoreHandler é instanciado para realizar o envio.
@@ -17,6 +19,18 @@ Para executar o modo de teste localmente basta utilizar a flag **-local**
 ```py
 python3 main.py -local
 ```
+Esse modo aceita um arquivo json como payload, simulando um recebimento de dado pelo bot do Telegram. Um exemplo pode ser observado em **debug/payload_example.json**. Para adquirir um novo payload, basta instanciar a Cloud Function e imprimir o corpo inteiro de uma mensagem obtida (basicamente descomente o trecho **print(request_json)** na função main, envie alguma solicitação pelo bot e veja o log da cloud function - o payload estará lá para ser copiado).
+
+Para executar outras mensagens, basta adicionar novos arquivos json na pasta debug com payloads distintos. Sugestão de payloads a serem testados:
+* callback
+* location
+* photo
+
+Para executar outros payloads, basta adicionar -payload <nome_do_arquivo> na execução da função. Abaixo, um exemplo para o payload callback, que acessa o arquivo payload_callback.json:
+```py
+python3 main.py -local -payload callback
+```
+
 ## Arquivo bot_config.json
 
 Os dados sensíveis da aplicação estão contidos nesse arquivo. O significado de cada campo será apresentado a seguir:
