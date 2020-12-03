@@ -50,7 +50,6 @@ from google.cloud import bigquery
 import google.auth
 import json
 
-# https://cloud.google.com/bigquery/docs/loading-data-local
 
 class BigQueryHandler():
     def __init__(self, config):
@@ -92,9 +91,11 @@ class BigQueryHandler():
 
         query = f"""
             SELECT lat_long
-            FROM `{table_full_path}`
+            FROM  `{table_full_path}`
             WHERE is_flood = True
-            GROUP BY lat_long
+            GROUP BY lat_long,location_timestamp_ms
+            ORDER BY location_timestamp_ms desc
+            LIMIT 200
         """
 
         query_job = self.client.query(query)  # Make an API request.
