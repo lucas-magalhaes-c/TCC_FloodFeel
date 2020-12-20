@@ -40,27 +40,34 @@ A única Cloud Function que o Webhook irá acessar é a possui o bot do Telegram
 O sistema é composto pelo bot no telegram, por quatro Cloud Functions, três HTTP triggers que devem ser criados no Cloud Scheduler ou ferramenta semelhante e um conector entre a tabela em que os dados são salvos no Google Big Query e o Data Studio (ferramenta de visualização de dados).
 
 As Cloud Functions são:
-1. A que contém a lógica do [bot no telegram](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/telegram_bot_cf) e que escalona de acordo com a quantidade de usuários acessando o bot
+* A que contém a lógica do [bot no telegram](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/telegram_bot_cf) e que escalona de acordo com a quantidade de usuários acessando o bot
 
-2. A que [solicita a detecção de enchente nas fotos e que salva tais fotos no Cloud Storage](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/flood_detection_and_photo_storage_cf), ativada por cloud trigger.
+* A que [solicita a detecção de enchente nas fotos e que salva tais fotos no Cloud Storage](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/flood_detection_and_photo_storage_cf), ativada por cloud trigger.
 
-3. A que [atualiza os mapas gerados pela Maps Static API e que salva eles no Cloud Storage](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/current_flood_locations), também ativada por cloud trigger.
+* A que [atualiza os mapas gerados pela Maps Static API e que salva eles no Cloud Storage](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/current_flood_locations), também ativada por cloud trigger.
 
-4. A que [transfere os dados armazenados temporariamente no Firestore para o Big Query](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/fs_to_bq_cf), também ativada por cloud trigger.
+* A que [transfere os dados armazenados temporariamente no Firestore para o Big Query](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/fs_to_bq_cf), também ativada por cloud trigger.
 
 Caso os triggers sejam criados no Cloud Scheduler, a seguinte ordem de criação é sugerida:
-1. Criar de uma *service account* com os roles *Cloud Functions Invoker* e *Cloud Scheduler Admin*
-2. Acessar o [console do Cloud Scheduler](https://console.cloud.google.com/cloudscheduler)
-3. Iniciar a criação do cloud triger para cada Cloud Function no botão *Create Job* (o processo a seguir é análogo para todas)
-4. Inserir nome que identifique o trigger (sugere-se utilizar os mesmos nomes das *Cloud Functions*)
+* Criar de uma *service account* com os roles *Cloud Functions Invoker* e *Cloud Scheduler Admin*
+
+* Acessar o [console do Cloud Scheduler](https://console.cloud.google.com/cloudscheduler)
+
+* Iniciar a criação do cloud triger para cada Cloud Function no botão *Create Job* (o processo a seguir é análogo para todas)
+
+* Inserir nome que identifique o trigger (sugere-se utilizar os mesmos nomes das *Cloud Functions*)
+
 * Inserir as frequências para cada Cloud Function. 
    * flood_detection_and_photo_storage_cf: 1-59/5 * * * *
    * fs_to_bq_cf: */5 * * * *
    * current_flood_locations: 2-59/5 * * * *
    
-6. Selecionar target HTTP
-7. Inserir a URL para a *Cloud Function*
-8. Clicar em *Show more* e selecionar *Add OIDC token* como *Auth header*
-9. Adicionar a identificação da *service account* (é o *client email*).
+* Selecionar target HTTP
+
+* Inserir a URL para a *Cloud Function*
+
+* Clicar em *Show more* e selecionar *Add OIDC token* como *Auth header*
+
+* Adicionar a identificação da *service account* (é o *client email*).
 
 ## 
