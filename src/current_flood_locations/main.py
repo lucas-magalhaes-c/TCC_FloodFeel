@@ -63,7 +63,7 @@ def main(request):
         )
 
     print(f"Current flood locations per region refreshed: {len(url_list)} images")
-
+    return '', 201
 
 
 if "-local" in sys.argv:

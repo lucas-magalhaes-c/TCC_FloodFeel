@@ -60,7 +60,8 @@ def main (request):
         )
         number_of_files = number_of_files + 1
     
-    return print('No data to check and upload' if number_of_files == 0 else f'{number_of_files} photos validated and uploaded')
+    print('No data to check and upload' if number_of_files == 0 else f'{number_of_files} photos validated and uploaded')
+    return '', 201
         
 
 if "-local" in sys.argv:

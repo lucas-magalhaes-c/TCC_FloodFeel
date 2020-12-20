@@ -18,7 +18,7 @@ def main(request):
             request_json = json.loads(open("debug/payload.json").read())
     else:
         request_json = request.get_json()
-        # Uncomment to print the request_json to receive data to put in debug payloads
+        # Uncomment to print the request_json, if needed
         # print(request_json)
 
     # Ignore requests with no body
@@ -74,6 +74,11 @@ def run_bot(request_json):
         print("> Message sent")
     else: 
         MH.infos_cloud()
+    
+    return '', 201
+    # except:
+    #     print(f"Failed to upload {len(data_to_upload)} documents")
+    #     return '', 500
     
 
 if local:

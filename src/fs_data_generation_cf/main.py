@@ -48,6 +48,8 @@ def main(request):
         print(f"Documents uploaded. Total: {len(data_to_upload)}")
     except Exception as e:
         print(f"Failed to upload {len(data_to_upload)} documents:\n",e)
+    
+    return '', 201
 
 if local:
     main(None)

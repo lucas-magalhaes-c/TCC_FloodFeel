@@ -62,6 +62,8 @@ def main (request):
         else:
             print(f"Failed. Data from date {date} wasn't sent to Big Query")
     
+    return '', 201
+    
     
 if "-local" in sys.argv:
     main(None)
