@@ -8,7 +8,7 @@ Com isso em mente, os alunos de engenharia de computação da Escola Politécnic
 
 O sistema funciona com a colaboração da população com informações. O usuário começa a interagir com a plataforma através de um bot no Telegram chamado EnchentesBot. Utilizando o bot, é possível reportar um novo foco de enchente ao realizar três etapas: compartilhar a localização, enviar uma foto da enchente e indicar qual o nível de gravidade da mesma, segundo uma imagem de referência. Nele também é possível consultar onde estão ocorrendo enchentes no momento. Outra forma de utilização do sistema pelo usuário é a visualização de dados históricos de enchentes em um dashboard que contém gráficos, tabelas e um mapa que apresenta a localização e gravidade de enchentes. 
 
-A arquitetura foi projetada para funcionar de forma escalável na nuvem, conseguindo aumentar suas capacidades conforme o número de usuários aumenta, e de maneira que seja fácil adicionar novas funcionalidades, como a predição de enchentes e o envio de alertas para os usuários.
+A arquitetura foi projetada para funcionar de forma escalonável na nuvem, conseguindo aumentar suas capacidades conforme o número de usuários aumenta, e de maneira que seja fácil adicionar novas funcionalidades, como a predição de enchentes e o envio de alertas para os usuários.
 
 <img src="docs/ArquiteturaTecnologias.jpg">
 
@@ -35,6 +35,17 @@ Em que:
 
 A única Cloud Function que o Webhook irá acessar é a possui o bot do Telegram, com toda a lógica de como a interação com o mesmo será feita. A seguir serão apresentados os caminhos para as explicações de todos os módulos que foram desenvolvidos.
 
-# O projeto
+# O sistema
+
+O sistema é composto pelo bot no telegram, por quatro Cloud Functions, três HTTP triggers que devem ser criados no Cloud Scheduler ou ferramenta semelhante e um conector entre a tabela em que os dados são salvos no Google Big Query e o Data Studio (ferramenta de visualização de dados).
+
+As Cloud Functions são:
+* A que contém a lógica do [bot no telegram](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/telegram_bot_cf) e que escalona de acordo com a quantidade de usuários acessando o bot
+* A que [solicita a detecção de enchente nas fotos e que salva tais fotos no Cloud Storage](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/flood_detection_and_photo_storage_cf), ativada por cloud trigger.
+* A que [atualiza os mapas gerados pela Maps Static API e que salva eles no Cloud Storage](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/current_flood_locations), também ativada por cloud trigger.
+* A que [transfere os dados armazenados temporariamente no Firestore para o Big Query](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/fs_to_bq_cf), também ativada por cloud trigger.
+
+Caso os triggers sejam criados no Cloud Scheduler, a seguinte ordem de criação é sugerida:
+* Criação de uma *service account* com os roles *Cloud Functions Invoker* e *Cloud Scheduler Admin*
 
 ## 
