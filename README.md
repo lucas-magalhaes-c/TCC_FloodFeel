@@ -48,6 +48,8 @@ As Cloud Functions são:
 
 * A que [transfere os dados armazenados temporariamente no Firestore para o Big Query](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/fs_to_bq_cf), também ativada por cloud trigger.
 
+
+## Criando os triggers
 Caso os triggers sejam criados no Cloud Scheduler, a seguinte ordem de criação é sugerida:
 * Criar de uma *service account* com os roles *Cloud Functions Invoker* e *Cloud Scheduler Admin*
 
