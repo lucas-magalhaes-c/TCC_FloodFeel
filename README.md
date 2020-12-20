@@ -46,6 +46,14 @@ As Cloud Functions são:
 * A que [transfere os dados armazenados temporariamente no Firestore para o Big Query](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/fs_to_bq_cf), também ativada por cloud trigger.
 
 Caso os triggers sejam criados no Cloud Scheduler, a seguinte ordem de criação é sugerida:
-* Criação de uma *service account* com os roles *Cloud Functions Invoker* e *Cloud Scheduler Admin*
+* Criar de uma *service account* com os roles *Cloud Functions Invoker* e *Cloud Scheduler Admin*
+* Acessar o [console do Cloud Scheduler](https://console.cloud.google.com/cloudscheduler)
+* Iniciar a criação do cloud triger para cada Cloud Function no botão *Create Job* (o processo a seguir é análogo para todas)
+* Inserir nome que identifique o trigger (sugere-se utilizar os mesmos nomes das *Cloud Functions*)
+* Inserir as frequências para cada Cloud Function
+* Selecionar target HTTP
+* Inserir a URL para a *Cloud Function*
+* Clicar em *Show more* e selecionar *Add OIDC token* como *Auth header*
+* Adicionar o "email" da *service account*
 
 ## 
