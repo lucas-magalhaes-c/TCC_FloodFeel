@@ -72,4 +72,14 @@ Caso os triggers sejam criados no Cloud Scheduler, a seguinte ordem de criação
 
 * Adicionar a identificação da *service account* (é o *client email*).
 
-## 
+## Criando o Dashboard
+
+Acessando o console do Data Studio, os seguintes passos devem ser feitos:
+* Crie um novo *report* 
+* Na aba *Resources*, acesse *Managed added data sources*
+* Clique em *Add data source*
+* Selecione Big Query
+* Encontre a tabela onde estão os dados de enchentes
+* Clique em *Add* para adicionar essa fonte de dados
+
+Após isso, os dados poderão ser acessados para criar os gráficos desejados. 
