@@ -83,3 +83,6 @@ Acessando o console do Data Studio, os seguintes passos devem ser feitos:
 * Clique em *Add* para adicionar essa fonte de dados
 
 Após isso, os dados poderão ser acessados para criar os gráficos desejados. 
+
+## Visão detalhada do sistema
+<img src="docs/ArquiteturaTecnologiasVisaoDetalhada.jpg">
