@@ -53,7 +53,7 @@ Caso os triggers sejam criados no Cloud Scheduler, a seguinte ordem de criação
 2. Acessar o [console do Cloud Scheduler](https://console.cloud.google.com/cloudscheduler)
 3. Iniciar a criação do cloud triger para cada Cloud Function no botão *Create Job* (o processo a seguir é análogo para todas)
 4. Inserir nome que identifique o trigger (sugere-se utilizar os mesmos nomes das *Cloud Functions*)
-5. Inserir as frequências para cada Cloud Function. 
+* Inserir as frequências para cada Cloud Function. 
    * flood_detection_and_photo_storage_cf: 1-59/5 * * * *
    * fs_to_bq_cf: */5 * * * *
    * current_flood_locations: 2-59/5 * * * *
