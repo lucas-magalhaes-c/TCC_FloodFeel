@@ -41,8 +41,11 @@ O sistema é composto pelo bot no telegram, por quatro Cloud Functions, três HT
 
 As Cloud Functions são:
 1. A que contém a lógica do [bot no telegram](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/telegram_bot_cf) e que escalona de acordo com a quantidade de usuários acessando o bot
+
 2. A que [solicita a detecção de enchente nas fotos e que salva tais fotos no Cloud Storage](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/flood_detection_and_photo_storage_cf), ativada por cloud trigger.
+
 3. A que [atualiza os mapas gerados pela Maps Static API e que salva eles no Cloud Storage](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/current_flood_locations), também ativada por cloud trigger.
+
 4. A que [transfere os dados armazenados temporariamente no Firestore para o Big Query](https://github.com/lucas-magalhaes-c/TCC_FloodFeel/tree/main/src/fs_to_bq_cf), também ativada por cloud trigger.
 
 Caso os triggers sejam criados no Cloud Scheduler, a seguinte ordem de criação é sugerida:
