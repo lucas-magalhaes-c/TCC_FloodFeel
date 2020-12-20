@@ -17,9 +17,9 @@ A arquitetura foi projetada para funcionar de forma escalonável na nuvem, conse
 É necessário criar um novo projeto na Google Cloud Platform. Para o bot do Telegram funcionar serveless, foi escolhido fazer o deploy do mesmo por meio de uma Cloud Funcion. No geral, para ativar Cloud Functions, o seguinte tutorial pode ser seguido: 
 [Cloud functions Quickstart](https://cloud.google.com/functions/docs/quickstart)
 
-## Criação do bot do Telegram
+# Criação do bot do Telegram
 
-Para criar um bot no Telegram basta iniciar uma conversa com o BotFather e registrar um novo bot pelo comando \newbot.
+Para criar um bot no Telegram basta iniciar uma conversa com o BotFather e registrar um novo bot pelo comando \newbot. Após criado, basta obter o token do bot pelo BotFather por meio dos seguintes comandos: \mybots > escolha o bot criado > API Token.
 
 ## Setup do Webhook
 
