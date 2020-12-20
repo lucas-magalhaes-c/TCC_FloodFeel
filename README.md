@@ -50,10 +50,10 @@ Caso os triggers sejam criados no Cloud Scheduler, a seguinte ordem de criação
 * Acessar o [console do Cloud Scheduler](https://console.cloud.google.com/cloudscheduler)
 * Iniciar a criação do cloud triger para cada Cloud Function no botão *Create Job* (o processo a seguir é análogo para todas)
 * Inserir nome que identifique o trigger (sugere-se utilizar os mesmos nomes das *Cloud Functions*)
-* Inserir as frequências para cada Cloud Function
+* Inserir as frequências para cada Cloud Function. São elas -> flood_detection_and_photo_storage_cf: 1-59/5 * * * *; fs_to_bq_cf: */5 * * * *; e current_flood_locations: 2-59/5 * * * *
 * Selecionar target HTTP
 * Inserir a URL para a *Cloud Function*
 * Clicar em *Show more* e selecionar *Add OIDC token* como *Auth header*
-* Adicionar o "email" da *service account*
+* Adicionar a identificação da *service account* (é o *client email*).
 
 ## 
