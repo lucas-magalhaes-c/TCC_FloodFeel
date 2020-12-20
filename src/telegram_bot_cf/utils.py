@@ -203,10 +203,11 @@ def hashText(text,salt=None):
         return hashlib.sha256(text.encode()).hexdigest()
 
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import time 
-date = datetime.today().strftime('%Y-%m-%d')
-timestamp_ms = round(time.time() * 1000)
+today_datetime = datetime.today() - timedelta(hours=3)
+date = today_datetime.strftime('%Y-%m-%d')
+timestamp_ms = round(today_datetime.timestamp() * 1000)
 
 class MessageHandle():
     def __init__(self,request_json,config):
@@ -302,7 +303,7 @@ class MessageHandle():
                     self.is_valid = True
                 else:
                     self.is_valid = False
-                    print("Failed on validation: bot id doesnt match")
+                    print(f'Failed on validation. Bot id doesnt match: {self.request_from["id"]}')
             except:
                 print("Failed on callback query validation")
         else:
